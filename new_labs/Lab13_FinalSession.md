@@ -70,6 +70,49 @@ Quality over quantity.
 
 ---
 
+## The video presentation
+
+Your final submission includes a **5-minute group video presentation**.
+This is part of the graded hand-in — not optional.
+
+### What to include
+
+A 5-minute video covering roughly:
+
+| Time | Content |
+|---|---|
+| 0:00–0:30 | Problem statement — what you worked on and why it is interesting |
+| 0:30–1:30 | Dataset — show some images, describe the challenge |
+| 1:30–3:00 | Approach and experiments — what you tried and what happened |
+| 3:00–4:00 | Results — your best result, confusion matrix or key figure |
+| 4:00–5:00 | Discussion — what worked, what did not, what you would try next |
+
+### Practical tips
+
+**Record with screen sharing.** Open your notebook or report, share your
+screen, and talk through it. You do not need slides.
+
+**Show actual outputs.** Generated images, detection results, segmentation
+masks, loss curves — visual outputs are more compelling than text.
+
+**Each group member should speak.** The video is group-level but all
+members should contribute visibly.
+
+**Keep it under 5 minutes.** Going over the limit signals poor preparation.
+
+**Do not read from the report.** Talk naturally about what you did.
+The video should feel like you are explaining your work to a colleague,
+not presenting it formally.
+
+### Recording tools
+
+- **Loom** (free) — screen recording with webcam overlay
+- **OBS Studio** (free) — more control, slightly more setup
+- **Google Meet / Zoom** — record a call where you share your screen
+- **PowerPoint / Keynote** — built-in recording if you prefer slides
+
+---
+
 ## After submission
 
 Your project is submitted. The course continues with lectures

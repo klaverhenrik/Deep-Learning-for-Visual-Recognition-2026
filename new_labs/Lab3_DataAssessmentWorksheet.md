@@ -217,9 +217,46 @@ List open questions that you need to resolve before the week 4 proposal:
 
 ---
 
-## Part 5: Next Steps
+## Part 5: Literature
 
-**9. What do you need to do before the week 4 proposal workshop?**
+Your proposal must include 1–3 references to relevant research papers.
+Use this section to record what you have found today.
+
+**9. What papers have you found that are relevant to your problem?**
+
+| Paper title | Authors / year | Their result | How it relates to your project |
+|---|---|---|---|
+| | | | |
+| | | | |
+| | | | |
+
+---
+
+**10. What is the state of the art on your problem?**
+What is the best published result on your dataset or a closely related one?
+This gives you a reference point for your own results.
+
+_Write your answer here (if known):_
+
+&nbsp;
+
+---
+
+**11. What makes your approach different from prior work?**
+You do not need to be doing something novel — but you should be able to
+explain how your project relates to what has already been done.
+
+_Write your answer here:_
+
+&nbsp;
+
+&nbsp;
+
+---
+
+## Part 6: Next Steps
+
+**12. What do you need to do before the week 4 proposal workshop?**
 
 | Task | Who | Deadline |
 |---|---|---|
@@ -236,6 +273,8 @@ _For TA use during the session:_
 **Is the dataset suitable for the project?** [ ] Yes  [ ] Needs work  [ ] Unclear
 
 **Are the data problems manageable?** [ ] Yes  [ ] Risky  [ ] Serious concern
+
+**Has the group found relevant literature?** [ ] Yes  [ ] Needs work  [ ] Not yet
 
 **Is the group ready for the proposal?** [ ] Yes  [ ] Nearly  [ ] Needs more prep
 

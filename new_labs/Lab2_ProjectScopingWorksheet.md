@@ -17,6 +17,12 @@ to give feedback before the end of the session.
 You will refine this further in weeks 3 and 4, leading to your
 formal project proposal.
 
+**One thing to keep in mind throughout:** your project report will be
+assessed on *why* you made your choices, not just *what* you did.
+For every decision — which approach, which architecture, which dataset —
+you should be able to explain why you chose it over the alternatives.
+Start practising that habit now.
+
 ---
 
 ## Part 1: The Problem
@@ -124,6 +130,24 @@ _Write your answer here:_
 
 ## Part 3: The Approach
 
+**A note on tools and complexity**
+It is tempting to find a ready-made solution — a pre-packaged YOLO
+implementation, a one-click Roboflow pipeline, a HuggingFace model
+that does exactly what you need with three lines of code.
+These tools are excellent for real-world applications, but they are
+not suitable as the core of a course project, because most of the
+important design choices have already been made for you, leaving
+very little room to demonstrate understanding.
+
+A strong project requires you to make and justify design choices yourself —
+architecture, training procedure, evaluation, experiments. If a tool makes
+all of those choices for you, you cannot write a strong report.
+If you are considering a plug-and-play tool, ask yourself:
+*what would I actually be doing beyond clicking buttons?*
+If the answer is not clear, reconsider the approach.
+
+---
+
 **9. What is your planned approach?**
 You do not need to have this fully worked out yet.
 Which of the following best describes your starting point?
@@ -140,6 +164,16 @@ _Write your answer here:_
 
 &nbsp;
 
+**Why this approach and not a simpler one?**
+What makes this the right starting point for your problem?
+What alternatives did you consider and why did you rule them out?
+
+_Write your answer here:_
+
+&nbsp;
+
+&nbsp;
+
 ---
 
 **10. What is your baseline?**
@@ -153,13 +187,45 @@ _Write your answer here:_
 
 &nbsp;
 
+**Why is this a good baseline for your problem?**
+What does it test? What would a bad result tell you?
+
+_Write your answer here:_
+
 &nbsp;
 
 ---
 
-## Part 4: Success and Risk
+## Part 4: Related Work
 
-**11. What does success look like?**
+**11. What has already been done on this problem?**
+Your proposal must include 1–3 references to relevant research papers.
+You do not need to have read them in depth yet — but you need to know they exist
+and roughly what they say.
+
+Start at [Papers with Code](https://paperswithcode.com/) or
+[Google Scholar](https://scholar.google.com/). Search for your task type
+(e.g. "medical image segmentation") or your specific dataset if it is public.
+
+| Paper title | Authors / year | What it does | How it relates to your project |
+|---|---|---|---|
+| | | | |
+| | | | |
+| | | | |
+
+**What makes your approach different from or similar to prior work?**
+
+_Write your answer here:_
+
+&nbsp;
+
+&nbsp;
+
+---
+
+## Part 5: Success and Risk
+
+**12. What does success look like?**
 Define a concrete, measurable goal. Avoid vague targets like "high accuracy".
 
 | Target | Value | Justification |
@@ -170,7 +236,7 @@ Define a concrete, measurable goal. Avoid vague targets like "high accuracy".
 
 ---
 
-**12. What is the biggest risk to your project?**
+**13. What is the biggest risk to your project?**
 What is the single thing most likely to prevent you from getting a good result?
 
 - [ ] Not enough data
@@ -190,9 +256,9 @@ _Write your answer here:_
 
 ---
 
-## Part 5: Open Questions
+## Part 6: Open Questions
 
-**13. What do you not know yet that you need to find out?**
+**14. What do you not know yet that you need to find out?**
 List up to three open questions that you need to answer before you can
 commit to this project.
 
@@ -224,10 +290,10 @@ _For TA use during the session:_
 
 **Action items before week 3:**
 
-1. _______________________________________________
-
-2. _______________________________________________
+1. Find your dataset and confirm you can access it
+2. Find at least 1 relevant research paper on your problem
+3. _______________________________________________
 
 ---
 
-*Bring this worksheet to the week 3 lab. You will use it when evaluating your dataset.*
+*Bring this worksheet to the week 3 lab. You will use it when evaluating your dataset and finding your literature.*

@@ -119,8 +119,12 @@ understanding.
 
 ## Today's session
 
-**First 15 minutes:** read through this guide and apply it to your
+**First 15 minutes:** read through the figures guide below and apply it to your
 current figures and tables. Fix anything that fails the checklists above.
+
+**Next 20 minutes (if your related work is not yet written):**
+Read the **Related Work Writing Guide** (separate document) and draft
+your related work section. A TA can review it during the open session.
 
 **Remaining time:** open work session.
 

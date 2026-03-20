@@ -78,9 +78,15 @@ ask all of them — pick the ones most relevant to the group's situation.
 - "What does [their metric] of [their target] actually mean in practice — is that good enough for real use?"
 - "What is the state of the art on this problem, if known?"
 
-**On risk:**
-- "What is the most likely reason this project fails? Have you thought about that?"
-- "If you cannot get your planned dataset, what is plan B?"
+**On the iterative plan:**
+- "What is the first problem you expect to encounter after your baseline, and what will you try?"
+- "If your baseline overfits, what is your plan? If it underfits?"
+- "Walk me through one iteration you are planning — what is the issue, what is your hypothesis, how will you test it?"
+
+**On related work:**
+- "Have you found any papers that work on a similar problem? What result did they get?"
+- "How does your approach differ from what has already been published?"
+- "If someone has already solved this problem well, what is your contribution?"
 
 ---
 
