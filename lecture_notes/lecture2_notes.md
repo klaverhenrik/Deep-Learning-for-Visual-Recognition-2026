@@ -901,7 +901,7 @@ $$J(w) = \frac{1}{2}\sum_i \left(wx^{(i)} - y^{(i)}\right)^2$$
 
 The figure below shows four loss curves from training the same model with four different learning rates.
 
-![Learning rate scenarios](images\four_learning_rates.png)
+![Learning rate scenarios](images/four_learning_rates.png)
 
 In you own words, explain what you see.
 
