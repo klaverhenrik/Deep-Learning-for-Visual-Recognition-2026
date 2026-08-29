@@ -102,6 +102,8 @@ The learning rate $\alpha$ is one of the most important hyperparameters in machi
 
 It is generally good practice to start with a moderate learning rate (e.g. `1e-3`) and decay it over training so that early progress is fast and later fine-tuning is precise. We revisit this in Lecture 6.
 
+![Learning rate scenarios](images/learning_rate_scenarios.jpg)
+
 ### 2.5  Overfitting and Underfitting
 
 These concepts are most easily illustrated with polynomial regression, where the degree of the polynomial is a hyperparameter controlling model capacity:
@@ -735,52 +737,46 @@ K-NN on raw pixels performs poorly for a deeper reason than just speed. CIFAR-10
 The solution previewed at the end of the lecture is to use a CNN to extract a compact, semantically meaningful representation (e.g. a 512-dimensional vector) before applying K-NN. In that learned space, semantic similarity and geometric proximity align.
 
 ```python
-import torch
-import torch.nn.functional as F
+import numpy as np
+from matplotlib import pyplot as plt
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
 
-# ── K-NN implemented with PyTorch (vectorised, no loops) ──────────────
-class KNN:
-    def __init__(self, k=5, metric='l2'):
-        self.k      = k
-        self.metric = metric
+# ── Toy data ──────────────────────────────────────────────────────────
 
-    def fit(self, X_train, y_train):
-        """Store training data — no computation here."""
-        self.X_train = X_train   # shape: (N_train, D)
-        self.y_train = y_train   # shape: (N_train,)
+np.random.seed(0)
 
-    def predict(self, X_test):
-        """Find K nearest neighbours for each test point."""
-        if self.metric == 'l2':
-            # Efficient pairwise L2 distance using broadcasting
-            dists = torch.cdist(X_test, self.X_train, p=2)  # (N_test, N_train)
-        else:  # L1
-            dists = torch.cdist(X_test, self.X_train, p=1)
+X_train = np.random.randn(200, 2)
+y_train = (X_train[:, 0] + X_train[:, 1] > 0).astype(int)
 
-        # For each test point, find the K smallest distances
-        _, topk_idx = dists.topk(self.k, dim=1, largest=False)  # (N_test, K)
+X_test = np.random.randn(20, 2)
+y_test = (X_test[:, 0] + X_test[:, 1] > 0).astype(int)
 
-        # Majority vote among K neighbours
-        neighbor_labels = self.y_train[topk_idx]   # (N_test, K)
-        preds = torch.mode(neighbor_labels, dim=1).values
-        return preds
+# Plot
+plt.plot(X_train[y_train==0, 0], X_train[y_train==0, 1], 'o', label='Class 0')
+plt.plot(X_train[y_train==1, 0], X_train[y_train==1, 1], 'o', label='Class 1')
+plt.legend()
+plt.show()
 
-# ── Toy demo ──────────────────────────────────────────────────────────
-torch.manual_seed(0)
-X_train = torch.randn(200, 2)
-y_train = (X_train[:, 0] + X_train[:, 1] > 0).long()  # simple rule
-X_test  = torch.randn(20, 2)
-y_test  = (X_test[:, 0]  + X_test[:, 1]  > 0).long()
+# ── K-Nearest Neighbours ──────────────────────────────────────────────
 
 for k in [1, 5, 15]:
-    knn = KNN(k=k)
-    knn.fit(X_train, y_train)
-    preds    = knn.predict(X_test)
-    accuracy = (preds == y_test).float().mean()
+
+    model = KNeighborsClassifier(
+        n_neighbors=k,
+        metric='euclidean'
+    )
+
+    model.fit(X_train, y_train)
+
+    preds = model.predict(X_test)
+
+    accuracy = accuracy_score(y_test, preds)
+
     print(f'K={k:2d}  accuracy: {accuracy:.0%}')
 ```
 
-*Code 10 – K-NN implemented in PyTorch using `torch.cdist` for efficient vectorised pairwise distance computation. Notice that `fit()` is trivial (just storing data), while `predict()` does all the work — $O(N_\text{train})$ per test point.*
+*Code 10 – K-NN example using `sklearn`. Notice that `fit()` is trivial (just storing data), while `predict()` does all the work — $O(N_\text{train})$ per test point.*
 
 ---
 
@@ -802,72 +798,61 @@ K-Means is the simplest and most widely used clustering algorithm. It partitions
 K-Means minimises the within-cluster sum of squared distances. It is guaranteed to converge but only to a local minimum, so it is common practice to run it multiple times with different initialisations and keep the best result.
 
 ```python
-import torch
+import numpy as np
 from matplotlib import pyplot as plt
-
-# ── K-means clustering ───────────────────────────────────────────────
-
-def kmeans(X, K, n_iters=100, seed=0):
-    """
-    K-Means clustering.
-    Args:
-        X: (N, D) tensor of data points
-        K: number of clusters
-    Returns:
-        centroids: (K, D) final cluster centres
-        assignments: (N,) cluster index for each point
-    """
-    torch.manual_seed(seed)
-    N, D = X.shape
-
-    # Initialise: pick K random data points as starting centroids
-    idx       = torch.randperm(N)[:K]
-    centroids = X[idx].clone()   # (K, D)
-
-    for iteration in range(n_iters):
-        # ── Assignment step ────────────────────────────────────────────
-        # dists[i, k] = squared distance from point i to centroid k
-        dists       = torch.cdist(X, centroids, p=2)  # (N, K)
-        assignments = dists.argmin(dim=1)             # (N,) — closest centroid
-
-        # ── Update step ────────────────────────────────────────────────
-        new_centroids = torch.zeros_like(centroids)
-        for k in range(K):
-            mask = (assignments == k)
-            if mask.any():                        # avoid empty clusters
-                new_centroids[k] = X[mask].mean(dim=0)
-            else:
-                new_centroids[k] = centroids[k]  # keep old centroid
-
-        # Check convergence
-        if (new_centroids - centroids).abs().max() < 1e-6:
-            print(f'Converged at iteration {iteration}')
-            break
-        centroids = new_centroids
-
-    return centroids, assignments
+from sklearn.cluster import KMeans
 
 # ── Demo: cluster three Gaussian blobs ────────────────────────────────
-torch.manual_seed(42)
-blobs = torch.cat([
-    torch.randn(50, 2) + torch.tensor([-3.,  0.]),
-    torch.randn(50, 2) + torch.tensor([ 3.,  0.]),
-    torch.randn(50, 2) + torch.tensor([ 0.,  3.]),
+
+np.random.seed(42)
+
+blobs = np.concatenate([
+    np.random.randn(50, 2) + np.array([-3.,  0.]),
+    np.random.randn(50, 2) + np.array([ 3.,  0.]),
+    np.random.randn(50, 2) + np.array([ 0.,  3.]),
 ])
 
-centroids, assignments = kmeans(blobs, K=3)
-for k in range(3):
-    count = (assignments == k).sum().item()
-    print(f'Cluster {k}: {count} points, centroid ≈ {centroids[k].tolist()}')
+# ── K-means clustering ────────────────────────────────────────────────
 
-# Plot
+model = KMeans(
+    n_clusters=3,
+    random_state=0,
+    n_init=10
+)
+
+assignments = model.fit_predict(blobs)
+centroids = model.cluster_centers_
+
+# ── Inspect result ────────────────────────────────────────────────────
+
+for k in range(3):
+    count = np.sum(assignments == k)
+    print(
+        f'Cluster {k}: {count} points, '
+        f'centroid ≈ {centroids[k].tolist()}'
+    )
+
+# ── Plot ──────────────────────────────────────────────────────────────
+
 plt.figure()
-plt.scatter(blobs[:, 0], blobs[:, 1], c=assignments)
-plt.scatter(centroids[:, 0], centroids[:, 1], c='b', s=100)
+
+plt.scatter(
+    blobs[:, 0],
+    blobs[:, 1],
+    c=assignments
+)
+
+plt.scatter(
+    centroids[:, 0],
+    centroids[:, 1],
+    marker='X',
+    s=150
+)
+
 plt.show()
 ```
 
-*Code 11 – K-Means from scratch in PyTorch. The assignment step (argmin of pairwise distances) and update step (mean of assigned points) directly implement the algorithm from the slides. In practice, `sklearn.cluster.KMeans` is more efficient and robust, but this implementation makes the mechanics transparent.*
+*Code 11 – K-Means using `sklearn`.*
 
 ---
 
@@ -885,8 +870,8 @@ This lecture established the three core building blocks that every algorithm in 
 | Softmax | Maps $K$ scores to a probability distribution over $K$ classes | `torch.softmax(z, dim=1)` |
 | L2 regularisation | Penalises large weights to prevent overfitting | `weight_decay=` in optim |
 | L1 regularisation | Penalises absolute weight values; induces sparsity | manual: `p.abs().sum()` |
-| K-NN | Non-parametric; predict by majority vote of $K$ neighbours | `torch.cdist(Xtest, Xtrain)` |
-| K-Means | Unsupervised clustering; alternates assign and update | sklearn or manual |
+| K-NN | Non-parametric; predict by majority vote of $K$ neighbours | `sklearn.neighbors.KNeighborsClassifier` |
+| K-Means | Unsupervised clustering; alternates assign and update | `sklearn.cluster.KMeans` |
 | Train/Val/Test | Proper evaluation protocol to avoid data leakage | `random_split(dataset, ...)` |
 
 The most important concept to carry forward is the three-step recipe: define a model, choose a loss, run gradient descent. In Lecture 3 we stack multiple linear layers with non-linear activations to build neural networks that can represent arbitrarily complex functions — but the recipe stays exactly the same.
@@ -894,8 +879,9 @@ The most important concept to carry forward is the three-step recipe: define a m
 ---
 
 ## 10  Exercises
+The exercises are representative of the types of questions you might encounter at the written exam (except that the exam questions will be formulated as multiple choice). You are welcome to work on the exercises during TØ on Thursdays.
 
-### 10.1  Exercise 1 — Gradient Descent by Hand
+### Exercise 1 — Gradient Descent by Hand
 
 Consider a linear regression model $h_w(x) = wx$ (no bias) with a single weight $w$, trained on two data points: $(x^{(1)}, y^{(1)}) = (1, 2)$ and $(x^{(2)}, y^{(2)}) = (2, 3)$.
 
@@ -911,20 +897,15 @@ $$J(w) = \frac{1}{2}\sum_i \left(wx^{(i)} - y^{(i)}\right)^2$$
 
 **(d)** Is the new loss $J(w_\text{new})$ smaller than $J(1.0)$? Verify by calculation.
 
-### 10.2  Exercise 2 — Learning Rate Effects
+### Exercise 2 — Learning Rate Effects
 
 The figure below shows four loss curves from training the same model with four different learning rates.
 
-*(Sketch: four curves over epochs — one diverging upward from the start, one oscillating without a clear downward trend, one decreasing smoothly to a low value, one decreasing very slowly and still far from convergence at the end of training.)*
+![Learning rate scenarios](images\four_learning_rates.png)
 
-Match each curve to one of the following descriptions and justify your answer in one sentence each:
+In you own words, explain what you see.
 
-- Learning rate far too high
-- Learning rate slightly too high
-- Learning rate appropriate
-- Learning rate too low
-
-### 10.3  Exercise 3 — Overfitting and Model Capacity
+### Exercise 3 — Overfitting and Model Capacity
 
 A polynomial regression model is trained on 20 data points. The table below shows training and validation loss for three polynomial degrees.
 
@@ -942,7 +923,7 @@ A polynomial regression model is trained on 20 data points. The table below show
 
 **(d)** If you added L2 regularisation to the degree-15 model, would you expect the training loss to go up, down, or stay the same? What about the validation loss?
 
-### 10.4  Exercise 4 — Softmax and Cross-Entropy
+### Exercise 4 — Softmax and Cross-Entropy
 
 A 3-class classifier produces the following raw output scores (logits) for one training image: $\mathbf{z} = [2.0,\ 1.0,\ 0.5]$. The true class is class 0.
 
@@ -954,7 +935,7 @@ A 3-class classifier produces the following raw output scores (logits) for one t
 
 **(d)** The softmax function is translation-invariant: $\text{softmax}(\mathbf{z}) = \text{softmax}(\mathbf{z} + c)$ for any constant $c$. Verify this for $c = -2.0$ using the logits from part (a).
 
-### 10.5  Exercise 5 — Reading PyTorch Code
+### Exercise 5 — Reading PyTorch Code
 
 Consider the following training loop:
 
@@ -989,7 +970,7 @@ for epoch in range(100):
 
 **(d)** K-NN requires storing all training examples and computing distances to all of them at test time. For a training set of $N$ images, each represented as a $D$-dimensional feature vector, what is the time complexity of classifying a single test image?
 
-### 10.7  Exercise 7 — Train / Validation / Test Protocol
+### Exercise 7 — Train / Validation / Test Protocol
 
 A student trains several models, evaluates each on the test set, picks the best one, and reports its test accuracy as the final result.
 
@@ -999,7 +980,7 @@ A student trains several models, evaluates each on the test set, picks the best 
 
 **(c)** In 5-fold cross-validation on a dataset of 500 examples, how many examples are used for training and how many for validation in each fold?
 
-### 10.8  Exercise 8 — Sigmoid and Logistic Regression
+### Exercise 8 — Sigmoid and Logistic Regression
 
 **(a)** Write down the sigmoid function $\sigma(z)$. What are its output range and its value at $z = 0$?
 
@@ -1009,7 +990,7 @@ A student trains several models, evaluates each on the test set, picks the best 
 
 **(d)** Logistic regression uses the cross-entropy loss rather than the L2 loss. Give one reason why L2 loss is a poor choice for binary classification.
 
-### 10.9  Exercise 9 — L1 vs L2 Regularisation
+### Exercise 9 — L1 vs L2 Regularisation
 
 Both L1 and L2 regularisation add a penalty term to the loss:
 
@@ -1023,7 +1004,7 @@ where $R(\mathbf{w}) = \|\mathbf{w}\|^2$ for L2 and $R(\mathbf{w}) = \|\mathbf{w
 
 **(c)** In PyTorch, `weight_decay=λ` in the optimiser implements L2 regularisation but not L1. How would you add an L1 penalty to the training loop? Write the two lines you would add inside the training loop.
 
-### 10.10  Exercise 10 — Bias, Variance, and the Bias-Variance Trade-off
+### Exercise 10 — Bias, Variance, and the Bias-Variance Trade-off
 
 **(a)** Define *bias* and *variance* in the context of model selection. Which corresponds to underfitting and which to overfitting?
 
