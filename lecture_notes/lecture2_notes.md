@@ -1005,6 +1005,7 @@ where $R(\mathbf{w}) = \|\mathbf{w}\|^2$ for L2 and $R(\mathbf{w}) = \|\mathbf{w
 **(c)** In PyTorch, `weight_decay=λ` in the optimiser implements L2 regularisation but not L1. How would you add an L1 penalty to the training loop? Write the two lines you would add inside the training loop.
 
 ### Exercise 10 — Bias, Variance, and the Bias-Variance Trade-off
+*Note: you will learn about bias-variance trade-off later in the course*
 
 **(a)** Define *bias* and *variance* in the context of model selection. Which corresponds to underfitting and which to overfitting?
 
