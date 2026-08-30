@@ -16,7 +16,7 @@ This repository contains course materials for the Deep Learning for Visual Recog
 ### [Demo Notebooks](demos)
 - Here you will find demo notebooks that will help you understand what deep learning can do. Use the demos to inspire project ideas.
 
-### [Old Reports](ole_reports)
+### [Old Reports](old_reports)
 - Here you will find report examples from 2025.
 - The readme contains an overview of the reports.
 
