@@ -1,14 +1,14 @@
-# Deep-Learning-for-Visual-Recognition-2026
+# Deep Learning for Visual Recognition 2026
 
 ## Overview
 
-This repository contains course materials for a deep learning and visual recognition class, including labs, demos, lecture notes, project worksheets, and supporting data resources.
+This repository contains course materials for the Deep Learning for Visual Recognition course at the Department of Computer Science, Aarhus University.
 
 ## Course Content
 
 ### [Lecture Notes](lecture_notes)
 - Here you will find all lecture notes.
-- Most of them contain runable code. For your convenience, the code has been put in separate jupyter notebooks (e.g., `lecture2_notes.md` -> `lecture_notes_code.ipynb`).
+- Most of them contain runable code. For your convenience, the code has been put in separate jupyter notebooks (e.g., `lecture2_notes.md` -> `lecture2_notes_code.ipynb`).
 
 ### [Labs](labs)
 - Here you will find the weekly labs.
