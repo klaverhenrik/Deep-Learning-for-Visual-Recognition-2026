@@ -172,7 +172,7 @@ Using a pretrained or plug-and-play model is acceptable as a **starting baseline
 
 ## 13. Plan a small experiment ladder
 
-Each experiment should change one main conceptual factor while keeping other important choices fixed. You do not need four experiments; complete the rows that are currently realistic.
+Each experiment should change one main conceptual factor while keeping other important choices fixed. Complete the rows the best you can at this stage, but be aware that the experiments will change once you start working on your project and acquire more knowledge - that is completely normal and expected.
 
 | Experiment | Main change from baseline | Question answered | Evidence to collect |
 |---|---|---|---|
