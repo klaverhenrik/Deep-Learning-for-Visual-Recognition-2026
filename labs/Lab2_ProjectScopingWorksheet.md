@@ -1,299 +1,301 @@
 # Project Scoping Worksheet
-### Deep Learning for Visual Recognition — Week 2
 
-**Group members:** _______________________________________________
+**Week 2 — From Project Idea to Testable Investigation**
 
-**Date:** _______________________________________________
+**Group members:**  
+**Date:**  
 
 ---
-
 ## Instructions
-
-Fill in this worksheet together as a group during today's lab session.
+Fill in this worksheet alone or together as a group during today's lab session.
+If you have multiple project ideas, you can work through the sheet multiple times.
 There are no right or wrong answers — the goal is to think through your
-project idea carefully before committing to it. A TA will come around
-to give feedback before the end of the session.
+project idea carefully before committing to it. The TAs will come around
+during the session to give you input and feedback.
 
-You will refine this further in weeks 3 and 4, leading to your
-formal project proposal.
+## Purpose of this exercise
 
-**One thing to keep in mind throughout:** your project report will be
-assessed on *why* you made your choices, not just *what* you did.
-For every decision — which approach, which architecture, which dataset —
-you should be able to explain why you chose it over the alternatives.
-Start practising that habit now.
+By the end of the lab, your group should have a **provisional, feasible project plan** containing:
 
----
+- a visual recognition task and dataset;
+- one primary research question;
+- a simple, credible baseline;
+- at least one controlled experiment;
+- an evaluation plan; and
+- a minimum viable project and fallback plan.
 
-## Part 1: The Problem
+Your answers may change after you inspect the data and read related work. Uncertainty is expected at this stage — record it rather than hiding it.
 
-**1. What is the problem you want to solve?**
-Describe it in plain language — no technical jargon. What would someone
-who knows nothing about deep learning understand from your description?
+Ask a TA for feedback before the end of the session. You will refine this worksheet into the final project proposal during Week 4.
 
-_Write your answer here (3–5 sentences):_
-
-&nbsp;
-
-&nbsp;
-
-&nbsp;
+**Suggested lab flow:** Complete Parts 1–3 first, discuss them briefly with a TA, and then draft Parts 4–6. Part 7 may be completed after the lab if time is limited.
 
 ---
 
-**2. Why is this problem interesting or important?**
-Who would benefit from a solution? What is currently done instead?
+# Part 1 — Problem and Task
 
-_Write your answer here:_
+## 1. What problem do you want to investigate?
 
-&nbsp;
+Explain the problem in plain language. Avoid model names for now.
 
-&nbsp;
+> Example: “Given an image of a plant leaf, predict which disease is present.”
 
----
+**Our problem:**
 
-**3. What is the input and what is the output?**
-Be specific. What does one example look like?
+## 2. Why is this problem interesting or useful?
+
+Who might care about the result? What makes the problem non-trivial?
+
+## 3. What are the inputs and outputs?
 
 | | Description | Example |
 |---|---|---|
 | **Input** | | |
-| **Output** | | |
+| **Output/target** | | |
 
----
+## 4. What is the primary task type?
 
-**4. What type of problem is it?**
-Tick all that apply:
-
-- [ ] Image classification (one label per image)
-- [ ] Object detection (bounding boxes + labels)
-- [ ] Image segmentation (pixel-level labels)
+- [ ] Image classification
+- [ ] Object detection
+- [ ] Semantic or instance segmentation
 - [ ] Image generation
-- [ ] Something else: _______________________________________________
+- [ ] Regression
+- [ ] Retrieval, matching, or verification
+- [ ] Vision-language or multimodal understanding
+- [ ] Other: ______________________________
+
+If your project combines several tasks, identify the **primary task that you will evaluate**:
 
 ---
 
-## Part 2: The Data
+# Part 2 — Research Question and Hypothesis
 
-**5. Where will your data come from?**
-Tick all that apply and describe:
+The project should be an investigation, not only an application of a pretrained model. A useful project asks what changes, why it may help, and how the claim will be tested.
 
-- [ ] Existing public dataset — name/link: _______________________________________________
-- [ ] We will collect it ourselves — how: _______________________________________________
-- [ ] We will scrape it from the web — source: _______________________________________________
-- [ ] Other: _______________________________________________
+## 5. What is your provisional research question?
+
+Try to express it as a comparison:
+
+> “How does **X** affect **Y** under **Z conditions**, compared with **baseline B**?”
+
+Possible factors include augmentation, loss function, amount of training data, fine-tuning strategy, model capacity, class imbalance, label noise, domain shift, or another justified method.
+
+**Our primary research question:**
+
+## 6. What is your initial hypothesis?
+
+State both the expected result and your reasoning. A hypothesis may turn out to be wrong; a well-designed negative result is still useful.
+
+> “We expect ___ because ___.”
 
 ---
 
-**6. How much data do you expect to have?**
+# Part 3 — Data Feasibility
 
-| Split | Approx. number of images |
+## 7. What data will you use?
+
+- [ ] Existing public dataset
+- [ ] Data supplied by a course partner or researcher
+- [ ] Data collected by the group
+- [ ] Data scraped from the web
+- [ ] Synthetic or generated data
+- [ ] Other: ______________________________
+
+**Dataset name/source/link:**
+
+**Can you access and legally use it for the project?**  Yes / No / Unsure
+
+## 8. What counts as one independent example?
+
+For example: one image, one video, one patient, one specimen, or one scene. Note whether several files can come from the same source.
+
+For example:
+- 10,000 unrelated photographs → approximately 10,000 independent examples.
+- 10,000 video frames from 100 videos → closer to 100 independent sources.
+- 5,000 medical images from 500 patients → 500 independent patients.
+- Multiple augmented versions of 1,000 images → still only 1,000 original examples.
+- Several photos of each of 200 objects → 200 independent objects.
+
+This matters because closely related images must stay in the same train/validation/test split. Otherwise, the model may see nearly identical information during training and testing, producing overly optimistic results due to data leakage.
+
+## 9. What targets or annotations are available?
+
+Examples include class labels, bounding boxes, masks, captions, paired images, or continuous measurements.
+
+| Question | Answer |
 |---|---|
-| Training set | |
-| Validation set | |
-| Test set | |
-| **Total** | |
+| Annotation/target type | |
+| Approximate number of independent examples | |
+| Number of classes or target categories, if applicable | |
+| Known imbalance or rare cases | |
+| Annotation quality or missing labels | |
 
-If you are unsure, write your best estimate and note what it depends on.
+## 10. How should the data be split?
 
-&nbsp;
+Propose a training/validation/test split. Explain what must be grouped to prevent leakage — for example, images from the same patient, video, object, location, or near-duplicate source must not appear across splits.
 
----
+| Split | Approximate size | Purpose |
+|---|---:|---|
+| Training | | Fit model parameters |
+| Validation | | Select models and settings |
+| Test | | Final evaluation only |
 
-**7. What are the classes / categories?**
-List them and give the expected number of examples per class.
-Flag any class imbalance you already know about.
+**Grouping or leakage constraints:**
 
-| Class name | Expected number of examples | Notes |
-|---|---|---|
-| | | |
-| | | |
-| | | |
-| | | |
-| | | |
+## 11. Inspect several examples from the dataset
 
----
+Do not rely only on the dataset description. Record at least three observations that could affect learning or evaluation.
 
-**8. What are the potential data problems?**
-Think about: quality, labelling noise, class imbalance, domain shift,
-privacy or ethical concerns, licensing restrictions.
+| Observation | Why it may matter |
+|---|---|
+| 1. | |
+| 2. | |
+| 3. | |
 
-_Write your answer here:_
-
-&nbsp;
-
-&nbsp;
-
-&nbsp;
+Potential issues to consider: duplicates, label noise, class imbalance, image quality, shortcuts or background cues, domain shift, and unrepresentative data.
 
 ---
 
-## Part 3: The Approach
+# Part 4 — Baseline and Experimental Plan
 
-**A note on tools and complexity**
-It is tempting to find a ready-made solution — a pre-packaged YOLO
-implementation, a one-click Roboflow pipeline, a HuggingFace model
-that does exactly what you need with three lines of code.
-These tools are excellent for real-world applications, but they are
-not suitable as the core of a course project, because most of the
-important design choices have already been made for you, leaving
-very little room to demonstrate understanding.
+## 12. What is the simplest credible baseline?
 
-A strong project requires you to make and justify design choices yourself —
-architecture, training procedure, evaluation, experiments. If a tool makes
-all of those choices for you, you cannot write a strong report.
-If you are considering a plug-and-play tool, ask yourself:
-*what would I actually be doing beyond clicking buttons?*
-If the answer is not clear, reconsider the approach.
+The transfer-learning example from today's lab is a reasonable starting pattern for many projects. Other tasks may require a pretrained detector, segmenter, generator, or vision-language model.
 
----
+Using a pretrained or plug-and-play model is acceptable as a **starting baseline**. It is not, by itself, a complete course project. Your group must own the question, adaptation or training procedure, experiment design, evaluation, and interpretation.
 
-**9. What is your planned approach?**
-You do not need to have this fully worked out yet.
-Which of the following best describes your starting point?
+**Baseline model or method:**
 
-- [ ] Fine-tune a pretrained CNN (ResNet, EfficientNet, ViT...)
-- [ ] Train from scratch
-- [ ] Use a pretrained model with no fine-tuning (zero-shot / feature extraction)
-- [ ] Build on top of an existing architecture (e.g. YOLO, Mask R-CNN, Stable Diffusion)
-- [ ] Not sure yet
+**What will be trained or fine-tuned?**
 
-What backbone / architecture are you considering, if any?
+**Why is this the simplest baseline that can answer your question?**
 
-_Write your answer here:_
+## 13. Plan a small experiment ladder
 
-&nbsp;
+Each experiment should change one main conceptual factor while keeping other important choices fixed. You do not need four experiments; complete the rows that are currently realistic.
 
-**Why this approach and not a simpler one?**
-What makes this the right starting point for your problem?
-What alternatives did you consider and why did you rule them out?
-
-_Write your answer here:_
-
-&nbsp;
-
-&nbsp;
-
----
-
-**10. What is your baseline?**
-A baseline is the simplest thing you could try first.
-It gives you a reference point to improve on, and it often reveals
-problems with your data or setup before you invest in complex solutions.
-
-What is the simplest baseline you could run in your first week of implementation?
-
-_Write your answer here:_
-
-&nbsp;
-
-**Why is this a good baseline for your problem?**
-What does it test? What would a bad result tell you?
-
-_Write your answer here:_
-
-&nbsp;
-
----
-
-## Part 4: Related Work
-
-**11. What has already been done on this problem?**
-Your proposal must include 1–3 references to relevant research papers.
-You do not need to have read them in depth yet — but you need to know they exist
-and roughly what they say.
-
-Start at [Papers with Code](https://paperswithcode.com/) or
-[Google Scholar](https://scholar.google.com/). Search for your task type
-(e.g. "medical image segmentation") or your specific dataset if it is public.
-
-| Paper title | Authors / year | What it does | How it relates to your project |
+| Experiment | Main change from baseline | Question answered | Evidence to collect |
 |---|---|---|---|
-| | | | |
-| | | | |
-| | | | |
+| **E0: Baseline** | — | How well does the basic approach work? | |
+| **E1** | | | |
+| **E2** | | | |
+| **E3 / extension** | | | |
 
-**What makes your approach different from or similar to prior work?**
+**What should remain fixed so the comparison is fair?**
 
-_Write your answer here:_
-
-&nbsp;
-
-&nbsp;
+Examples: data split, evaluation code, number of runs, training budget, preprocessing, and model-selection procedure.
 
 ---
 
-## Part 5: Success and Risk
+# Part 5 — Evaluation
 
-**12. What does success look like?**
-Define a concrete, measurable goal. Avoid vague targets like "high accuracy".
+## 14. How will you evaluate the project?
 
-| Target | Value | Justification |
+You will learn in detail about evaluation methods and metrics in Week 4. For now, do your best to figure out which methods/metrics are appropriate to your task. Accuracy alone may hide poor performance on rare classes; generated outputs may require both quantitative and qualitative evaluation.
+
+| Evaluation component | Choice | Why is it appropriate? |
 |---|---|---|
-| Primary metric (e.g. accuracy, mAP, FID...) | | |
-| Minimum acceptable result | | |
-| Stretch goal | | |
+| Primary metric | | |
+| Secondary metric(s) | | |
+| Per-class, subgroup, or robustness analysis | | |
+| Qualitative examples or error analysis | | |
+
+## 15. What evidence would answer the research question?
+
+Do not define project success only as reaching a particular score. Explain what comparison, pattern, or analysis would let you draw a credible conclusion — even if the hypothesis is not supported.
+
+**When will you use the test set?**
 
 ---
 
-**13. What is the biggest risk to your project?**
-What is the single thing most likely to prevent you from getting a good result?
+# Part 6 — Scope, Resources, and Risk
 
-- [ ] Not enough data
-- [ ] Data is hard to collect or label
-- [ ] The problem may be too hard for the time available
-- [ ] We are not sure the approach will work
-- [ ] Compute constraints
-- [ ] Something else: _______________________________________________
+## 16. Define the minimum viable project
 
-How do you plan to mitigate this risk?
+What is the smallest complete investigation your group can finish and analyse by the deadline?
 
-_Write your answer here:_
+It should include a working baseline, one meaningful controlled comparison, suitable evaluation, and error analysis.
 
-&nbsp;
+## 17. Optional extension
 
-&nbsp;
+If the minimum project succeeds early, what research-like method, additional hypothesis, robustness test, or broader analysis could you add?
 
----
+## 18. Feasibility and resources
+Some of these questions are hard to answer at this stage. You are encouraged to start experimenting already now.
 
-## Part 6: Open Questions
+| Question | Answer |
+|---|---|
+| Do you need more compute that what Google Colab provides? | |
+| Rough duration of one training run | |
+| How many runs may be needed? | |
+| Is annotation tooling needed, and if yes, is it available? | |
+| What must you verify this week? | |
 
-**14. What do you not know yet that you need to find out?**
-List up to three open questions that you need to answer before you can
-commit to this project.
+## 19. What is the biggest risk?
 
-1. _______________________________________________
+- [ ] Data cannot be accessed or used
+- [ ] Too little data or poor annotations
+- [ ] Data leakage or invalid evaluation
+- [ ] Training is too computationally expensive
+- [ ] Baseline implementation may not work
+- [ ] Research question is too broad or vague
+- [ ] Group lacks required domain knowledge
+- [ ] Other: ______________________________
 
-2. _______________________________________________
+**Risk:**
 
-3. _______________________________________________
-
----
-
-## TA Feedback
-
-_For TA use during the session:_
-
-**Is the problem well-scoped?** [ ] Yes  [ ] Needs work  [ ] Too broad  [ ] Too narrow
-
-**Is the data plan realistic?** [ ] Yes  [ ] Needs work  [ ] Unclear
-
-**Is the approach appropriate?** [ ] Yes  [ ] Needs work  [ ] Unclear
-
-**Key feedback:**
-
-&nbsp;
-
-&nbsp;
-
-&nbsp;
-
-**Action items before week 3:**
-
-1. Find your dataset and confirm you can access it
-2. Find at least 1 relevant research paper on your problem
-3. _______________________________________________
+**Fallback or mitigation:**
 
 ---
 
-*Bring this worksheet to the week 3 lab. You will use it when evaluating your dataset and finding your literature.*
+# Part 7 — Related Work and Next Steps
+
+## 20. Find 1–3 closely related projects or papers
+
+Use Google Scholar or references associated with the dataset. At this stage, focus on discovering reasonable baselines, evaluation practices, and realistic project scope.
+
+| Title and link | Task/data | Method and baseline | Evaluation | What we can learn or test differently |
+|---|---|---|---|---|
+| 1. | | | | |
+| 2. | | | | |
+| 3. | | | | |
+
+## 21. Open questions for the TA
+
+List up to three questions that block or materially affect your project plan.
+
+1.  
+2.  
+3.  
+
+---
+
+# TA Feedback
+
+## Quick scope check
+
+| Item | Too vague / risky | Plausible but needs work | Clear and feasible |
+|---|:---:|:---:|:---:|
+| Task and output | ☐ | ☐ | ☐ |
+| Research question and hypothesis | ☐ | ☐ | ☐ |
+| Data access and split validity | ☐ | ☐ | ☐ |
+| Baseline | ☐ | ☐ | ☐ |
+| Controlled experiment | ☐ | ☐ | ☐ |
+| Evaluation plan | ☐ | ☐ | ☐ |
+| Minimum viable scope and fallback | ☐ | ☐ | ☐ |
+
+## Most important feedback
+
+## Actions before the next project session
+
+- [ ] Confirm data access, licence, and approximate size
+- [ ] Inspect examples and check for duplicates or leakage risks
+- [ ] Run or identify a feasible baseline
+- [ ] Refine the research question and hypothesis
+- [ ] Read at least one closely related paper or project
+- [ ] Estimate training time on a small subset
+- [ ] Other: ______________________________
+
+---
+
+**Keep this worksheet. It is the starting point for your project proposal, not a final commitment to every choice.**
