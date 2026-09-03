@@ -48,7 +48,7 @@ import torch
 import torch.nn as nn
 
 # A single logistic unit with 2 inputs
-# w = [1, 1], b = -3  →  decision boundary: x1 + x2 = 3
+# w = [1, 1], b = -3  →  decision boundary: x1 + x2 = 3 <=> x2 = -x1 + 3
 unit = nn.Linear(2, 1)                    # wraps wᵀx + b
 unit.weight.data = torch.tensor([[1., 1.]])
 unit.bias.data   = torch.tensor([-3.])
@@ -67,7 +67,7 @@ for pt, pr in zip(points, probs):
     print(f'x={pt.tolist()}  P(y=1)={pr.item():.3f}  → class {cls}')
 
 # Output:
-# x=[1.0, 1.0]  P(y=1)=0.119  → class 0
+# x=[1.0, 1.0]  P(y=1)=0.269  → class 0
 # x=[2.0, 2.0]  P(y=1)=0.731  → class 1
 # x=[1.5, 1.5]  P(y=1)=0.500  → class 0  (tie goes to 0)
 ```
@@ -413,10 +413,10 @@ for act_name, act_cls in [('Sigmoid', nn.Sigmoid), ('ReLU', nn.ReLU)]:
 
     # Look at gradient magnitude in the FIRST layer
     first_grad = net[0].weight.grad.abs().mean().item()
-    print(f'{act_name:8s}  first-layer gradient mean: {first_grad:.6f}')
+    print(f'{act_name:s}  first-layer gradient mean: {first_grad:.12f}')
 
-# Sigmoid → gradient is ~0.000001 (vanished over 10 layers)
-# ReLU    → gradient is ~0.01     (healthy, doesn't vanish)
+# Sigmoid → gradient is ~0.0000000001 (vanished over 10 layers)
+# ReLU    → gradient is ~0.00001      (healthier, doesn't vanish completely)
 ```
 
 *Code 6 – Demonstrating the vanishing gradient problem. With 10 sigmoid layers, the gradient at the first layer is effectively zero. With ReLU, gradients remain healthy throughout the network.*
