@@ -39,7 +39,9 @@ However, the step activation function has zero derivative everywhere (and is und
 
 The logistic unit is the perceptron with the step function replaced by a sigmoid:
 
-$$h_{w,b}(\mathbf{x}) = \sigma(\mathbf{w}^T\mathbf{x} + b) \quad \text{where} \quad \sigma(z) = \frac{1}{1 + \exp(-z)}$$
+$$
+h_{w,b}(\mathbf{x}) = \sigma(\mathbf{w}^T\mathbf{x} + b) \quad \text{where} \quad \sigma(z) = \frac{1}{1 + \exp(-z)}
+$$
 
 [![The logistic sigmoid function](https://upload.wikimedia.org/wikipedia/commons/8/88/Logistic-curve.svg)](https://en.wikipedia.org/wiki/File:Logistic-curve.svg)
 
@@ -190,9 +192,13 @@ print(f'Total parameters: {total}')   # 4*3+4 + 4*4+4 + 2*4+2 = 46
 
 Forward propagation is the process of computing the network's output from its input. It proceeds layer by layer, applying the same two operations at each step:
 
-$$\mathbf{z}^{(l+1)} = \mathbf{W}^{(l)} \mathbf{a}^{(l)} + \mathbf{b}^{(l)} \qquad \text{(linear transformation)}$$
+$$
+\mathbf{z}^{(l+1)} = \mathbf{W}^{(l)} \mathbf{a}^{(l)} + \mathbf{b}^{(l)} \qquad \text{(linear transformation)}
+$$
 
-$$\mathbf{a}^{(l+1)} = \sigma\!\left(\mathbf{z}^{(l+1)}\right) \qquad \text{(element-wise activation)}$$
+$$
+\mathbf{a}^{(l+1)} = \sigma\!\left(\mathbf{z}^{(l+1)}\right) \qquad \text{(element-wise activation)}
+$$
 
 Starting from $\mathbf{a}^{(1)} = \mathbf{x}$ and repeating these two equations until the output layer gives the network's prediction $h_{W,b}(\mathbf{x}) = \mathbf{a}^{(L)}$. The intermediate values $\mathbf{z}^{(l)}$ and $\mathbf{a}^{(l)}$ must all be saved during the forward pass because they are needed again during backpropagation.
 
@@ -254,7 +260,9 @@ print('nn.Sequential output:', out.detach().round(decimals=3))
 
 For multi-class classification, the output layer uses a softmax activation that converts $K$ raw logits into $K$ probabilities. The target is a one-hot vector $\mathbf{y}$ (all zeros except a 1 in the position of the correct class). The cross-entropy loss is:
 
-$$J(W,b) = -\frac{1}{n} \sum_i \sum_k y_k^{(i)} \log h_{W,b}(\mathbf{x}^{(i)})_k$$
+$$
+J(W,b) = -\frac{1}{n} \sum_i \sum_k y_k^{(i)} \log h_{W,b}(\mathbf{x}^{(i)})_k
+$$
 
 Because $\mathbf{y}$ is one-hot, only one term in the inner sum is non-zero for each training example: the term corresponding to the true class. The loss therefore reduces to $-\log(\text{predicted probability of the correct class})$, which is large when the model is wrong and approaches zero when the model is confident and correct.
 
@@ -262,7 +270,9 @@ Because $\mathbf{y}$ is one-hot, only one term in the inner sum is non-zero for 
 
 When class labels are not mutually exclusive — a photo may contain both a dog and a cat — we use a separate sigmoid per output unit instead of a shared softmax. The extended binary cross-entropy loss then has contributions from both the positive and negative terms for every class:
 
-$$J(W,b) = -\frac{1}{n} \sum_i \sum_k \left[ y_k^{(i)} \log h_{W,b}(\mathbf{x}^{(i)})_k + (1 - y_k^{(i)}) \log(1 - h_{W,b}(\mathbf{x}^{(i)})_k) \right]$$
+$$
+J(W,b) = -\frac{1}{n} \sum_i \sum_k \left[ y_k^{(i)} \log h_{W,b}(\mathbf{x}^{(i)})_k + (1 - y_k^{(i)}) \log(1 - h_{W,b}(\mathbf{x}^{(i)})_k) \right]
+$$
 
 Note that each output unit uses a sigmoid rather than a shared softmax, that is $h_{W,b}(\mathbf{z_k}^{(i)})_k = \sigma(z_k)$.
 
@@ -319,7 +329,9 @@ print(f'MSE loss:           {mse(pred, target_oh):.4f}')
 
 Gradient descent requires the partial derivatives $\partial J / \partial \mathbf{W}^{(l)}$ and $\partial J / \partial \mathbf{b}^{(l)}$ for every layer $l$. A naive approach is the finite-difference approximation:
 
-$$\frac{\partial J}{\partial w_j} \approx \frac{J(\mathbf{w} + \varepsilon \mathbf{e}_j) - J(\mathbf{w})}{\varepsilon}$$
+$$
+\frac{\partial J}{\partial w_j} \approx \frac{J(\mathbf{w} + \varepsilon \mathbf{e}_j) - J(\mathbf{w})}{\varepsilon}
+$$
 
 where $\mathbf{e}_j$ is a unit vector in the direction of weight $w_j$ and $\varepsilon$ is a small number. The problem is computational cost: if the network has one million parameters, this requires one million forward passes per training example per update step. For a dataset of 60,000 images, that is 60 billion forward passes per gradient step — completely intractable.
 
@@ -329,7 +341,9 @@ Backpropagation solves this by computing all partial derivatives in one forward 
 
 Backpropagation's central concept is the error signal $\delta_i^{(l)}$, defined as the partial derivative of the loss with respect to the pre-activation $z_i^{(l)}$:
 
-$$\delta_i^{(l)} = \frac{\partial J}{\partial z_i^{(l)}}$$
+$$
+\delta_i^{(l)} = \frac{\partial J}{\partial z_i^{(l)}}
+$$
 
 Intuition (the demon analogy from the slides): imagine a demon sitting at neuron $i$ in layer $l$. It adds a small perturbation $\Delta z_i^{(l)}$ to the pre-activation. The resulting change in the loss is $\delta_i^{(l)} \cdot \Delta z_i^{(l)}$. A large $|\delta|$ means that unit has a large influence on the loss — its pre-activation should be corrected. The $\delta$ signals travel backwards through the network, from output to input, accumulating information about how each unit contributed to the error.
 
@@ -343,21 +357,29 @@ The backpropagation algorithm is captured in four equations. We state them for t
 
 **Equation 1 — Error at the output layer ($L$):**
 
-$$\boldsymbol{\delta}^{(L)} = (\mathbf{a}^{(L)} - \mathbf{y}) \odot \sigma'(\mathbf{z}^{(L)})$$
+$$
+\boldsymbol{\delta}^{(L)} = (\mathbf{a}^{(L)} - \mathbf{y}) \odot \sigma'(\mathbf{z}^{(L)})
+$$
 
 where $\odot$ is element-wise (Hadamard) product and $\sigma'(z) = \sigma(z)(1-\sigma(z))$ is the sigmoid derivative. This compares the network's prediction $\mathbf{a}^{(L)}$ to the target $\mathbf{y}$ and scales by how sensitive the output activation is to changes in $\mathbf{z}$.
 
 **Equation 2 — Error at intermediate layers (backpropagation rule):**
 
-$$\boldsymbol{\delta}^{(l)} = (\mathbf{W}^{(l)})^T \boldsymbol{\delta}^{(l+1)} \odot \sigma'(\mathbf{z}^{(l)})$$
+$$
+\boldsymbol{\delta}^{(l)} = (\mathbf{W}^{(l)})^T \boldsymbol{\delta}^{(l+1)} \odot \sigma'(\mathbf{z}^{(l)})
+$$
 
 The transposed weight matrix $(\mathbf{W}^{(l)})^T$ propagates the error from layer $l+1$ back to layer $l$. The element-wise product with $\sigma'(\mathbf{z}^{(l)})$ then gates the error by the local derivative of the activation function — if a neuron is saturated ($\sigma' \approx 0$), its error contribution is suppressed.
 
 **Equations 3 & 4 — Gradients for weights and biases:**
 
-$$\frac{\partial J}{\partial W_{ij}^{(l)}} = a_j^{(l)} \cdot \delta_i^{(l+1)}$$
+$$
+\frac{\partial J}{\partial W_{ij}^{(l)}} = a_j^{(l)} \cdot \delta_i^{(l+1)}
+$$
 
-$$\frac{\partial J}{\partial b_i^{(l)}} = \delta_i^{(l+1)}$$
+$$
+\frac{\partial J}{\partial b_i^{(l)}} = \delta_i^{(l+1)}
+$$
 
 These are the actual update quantities for gradient descent. Equation 3 says: the gradient for weight $W_{ij}^{(l)}$ is the product of the activation that feeds into it ($a_j^{(l)}$) and the error at the unit it feeds into ($\delta_i^{(l+1)}$). This is the classic Hebbian-style update: weights are strengthened when both the pre-synaptic activation and the post-synaptic error are large.
 
@@ -480,7 +502,9 @@ Neural networks are highly prone to overfitting. A network for MNIST with two hi
 
 The regularised loss for a neural network adds an L2 penalty summed over all weights across all layers:
 
-$$J_\text{reg}(W,b) = J(W,b) + \frac{\lambda}{2n} \sum_l \sum_{ij} \left(W_{ij}^{(l)}\right)^2$$
+$$
+J_\text{reg}(W,b) = J(W,b) + \frac{\lambda}{2n} \sum_l \sum_{ij} \left(W_{ij}^{(l)}\right)^2
+$$
 
 The effect on backpropagation is simple: the gradient for each weight $W_{ij}^{(l)}$ gains an extra term $+\lambda W_{ij}^{(l)}$. This shrinks each weight towards zero at every step, hence 'weight decay'. More regularisation techniques — dropout, early stopping, batch normalisation, data augmentation — are covered in Lecture 6.
 
@@ -847,7 +871,9 @@ The two most important ideas to carry forward: (1) backpropagation is just the c
 
 A small neural network has the following architecture: 2 inputs, one hidden layer with 2 units (sigmoid activation), and 1 output unit (sigmoid activation). The weights and biases are:
 
-$$\mathbf{W}^{(1)} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}, \quad \mathbf{b}^{(1)} = \begin{bmatrix} -0.5 \\ -0.5 \end{bmatrix}, \quad \mathbf{W}^{(2)} = \begin{bmatrix} 1 & 1 \end{bmatrix}, \quad b^{(2)} = -1.5$$
+$$
+\mathbf{W}^{(1)} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}, \quad \mathbf{b}^{(1)} = \begin{bmatrix} -0.5 \\ -0.5 \end{bmatrix}, \quad \mathbf{W}^{(2)} = \begin{bmatrix} 1 & 1 \end{bmatrix}, \quad b^{(2)} = -1.5
+$$
 
 Given input $\mathbf{x} = [1, 1]^T$:
 
@@ -885,7 +911,9 @@ A fully connected network has the following architecture: input layer with 784 u
 
 Consider the scalar computation:
 
-$$z = (x + w) \cdot y, \qquad L = (z - 1)^2$$
+$$
+z = (x + w) \cdot y, \qquad L = (z - 1)^2
+$$
 
 where $x = 1$, $w = 2$, $y = 3$.
 
