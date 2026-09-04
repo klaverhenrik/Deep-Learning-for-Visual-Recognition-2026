@@ -34,7 +34,11 @@ However, the step activation function has zero derivative everywhere (and is und
 The logistic unit is the perceptron with the step function replaced by a sigmoid:
 
 $$
-\text{output} = \begin{cases} 1 & \text{if } \mathbf{w}^T\mathbf{x} + b > 0 \\ 0 & \text{otherwise} \end{cases}
+\text{output} =
+\begin{cases}
+1 & \text{if } \mathbf{w}^T\mathbf{x} + b > 0 \\
+0 & \text{otherwise}
+\end{cases}
 $$
 
 The sigmoid is a smooth S-shaped curve that maps any real number to $(0, 1)$. Its derivative $\sigma'(z) = \sigma(z)(1 - \sigma(z))$ is positive everywhere, so gradient descent can always make progress. The output can be interpreted as the probability $P(y = 1 \mid \mathbf{x})$.
