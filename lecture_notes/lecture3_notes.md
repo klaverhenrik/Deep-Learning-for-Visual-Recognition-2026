@@ -682,11 +682,13 @@ for var, name in [(x, 'x'), (y, 'y'), (z, 'z')]:
 The same principle scales to an entire neural network. Each layer is a node in the computation graph. During the backward pass, each node receives the gradient of the loss with respect to its output — the **upstream gradient** — and applies the chain rule:
 
 $$
-\boxed{\text{gradient w.r.t. input}
+\boxed{
+\text{gradient w.r.t. input}
 =
 \text{upstream gradient}
 \times
-\text{local derivative}}
+\text{local derivative}
+}
 $$
 
 For a scalar node $z=f(x)$, this is simply
@@ -719,7 +721,9 @@ The first two are gradients for the layer's trainable parameters; the last ($\fr
 For a sigmoid node $z=\sigma(s)$, the local derivative is
 
 $$
-\frac{\partial z}{\partial s}=\sigma(s)(1-\sigma(s)).
+\frac{\partial z}{\partial s}
+=
+\sigma(s)(1-\sigma(s)).
 $$
 
 Multiplying it by the upstream gradient gives
@@ -732,6 +736,7 @@ $$
 $$
 
 Backpropagation repeatedly applies this rule from node to node through the computation graph. PyTorch's autograd engine performs these same chain-rule computations automatically.
+
 
 ```python
 import torch
