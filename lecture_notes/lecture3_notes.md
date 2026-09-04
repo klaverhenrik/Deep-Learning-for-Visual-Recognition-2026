@@ -33,7 +33,9 @@ However, the step activation function has zero derivative everywhere (and is und
 
 The logistic unit is the perceptron with the step function replaced by a sigmoid:
 
-$$h_{w,b}(\mathbf{x}) = \sigma(\mathbf{w}^T\mathbf{x} + b) \quad \text{where} \quad \sigma(z) = \frac{1}{1 + \exp(-z)}$$
+$$
+\text{output} = \begin{cases} 1 & \text{if } \mathbf{w}^T\mathbf{x} + b > 0 \newline 0 & \text{otherwise} \end{cases}
+$$
 
 The sigmoid is a smooth S-shaped curve that maps any real number to $(0, 1)$. Its derivative $\sigma'(z) = \sigma(z)(1 - \sigma(z))$ is positive everywhere, so gradient descent can always make progress. The output can be interpreted as the probability $P(y = 1 \mid \mathbf{x})$.
 
@@ -46,6 +48,7 @@ For a logistic unit with parameters $\mathbf{w} = [1, 1]^T$ and $b = -3$, the de
 ```python
 import torch
 import torch.nn as nn
+from matplotlib import pyplot as plt
 
 # A single logistic unit with 2 inputs
 # w = [1, 1], b = -3  →  decision boundary: x1 + x2 = 3 <=> x2 = -x1 + 3
@@ -65,6 +68,25 @@ probs  = torch.sigmoid(logits)            # apply σ
 for pt, pr in zip(points, probs):
     cls = 1 if pr > 0.5 else 0
     print(f'x={pt.tolist()}  P(y=1)={pr.item():.3f}  → class {cls}')
+
+# Plot data points and decision boundary
+plt.figure(figsize=(6, 4))
+plt.scatter(
+    points[:, 0],
+    points[:, 1],
+    c=probs.detach().squeeze(),
+    cmap="coolwarm",
+    s=100,
+)
+x_boundary = torch.linspace(0., 3., 100)
+y_boundary = 3. - x_boundary           # x1 + x2 = 3
+plt.plot(x_boundary, y_boundary, "k--", label="decision boundary")
+plt.colorbar(label="P(y=1)")
+plt.xlabel("x1")
+plt.ylabel("x2")
+plt.title("Logistic Regression Decision Boundary")
+plt.legend()
+plt.show()
 
 # Output:
 # x=[1.0, 1.0]  P(y=1)=0.269  → class 0
@@ -136,6 +158,7 @@ class MLP(nn.Module):
 model = MLP(input_dim=3, hidden_dim=4, output_dim=2)
 
 # Inspect weight shapes
+print("Model parameters:")
 for name, param in model.named_parameters():
     print(f'{name:20s}  shape: {tuple(param.shape)}')
 
@@ -149,6 +172,12 @@ for name, param in model.named_parameters():
 # Total parameters
 total = sum(p.numel() for p in model.parameters())
 print(f'Total parameters: {total}')   # 4*3+4 + 4*4+4 + 2*4+2 = 46
+
+# Example forward pass
+x = torch.randn(1, 3)  # random input
+logits = model(x)      # forward pass
+print(f'Example Input: {x.tolist()}')
+print(f'Example Output (logits): {logits.tolist()}')
 ```
 
 *Code 2 – An MLP built from `nn.Linear` layers. Each layer stores $\mathbf{W}$ and $\mathbf{b}$. The `forward()` method implements the equations $\mathbf{a}^{(j+1)} = \sigma(\mathbf{W}^{(j)}\mathbf{a}^{(j)} + \mathbf{b}^{(j)})$ explicitly.*
@@ -196,11 +225,22 @@ print('a2:', a2.detach().round(decimals=3))  # values in (0,1)
 
 # ── The same with nn.Sequential (cleaner, same computation) ──────────
 net = nn.Sequential(
-    nn.Linear(3, 4), nn.Sigmoid(),
-    nn.Linear(4, 2), nn.Sigmoid(),
+    nn.Linear(3, 4),
+    nn.Sigmoid(),
+    nn.Linear(4, 2),
+    nn.Sigmoid(),
 )
+
+# Copy the weights and biases from the manual network to the nn.Sequential network
+with torch.no_grad():
+    net[0].weight.copy_(W1)
+    net[0].bias.copy_(b1)
+    net[2].weight.copy_(W2)
+    net[2].bias.copy_(b2)
+
 out = net(x)
 print('nn.Sequential output:', out.detach().round(decimals=3))
+
 ```
 
 *Code 3 – Manual forward propagation showing every intermediate tensor. PyTorch records these in the computation graph automatically. The `nn.Sequential` version is identical in computation but hides the intermediates.*
@@ -235,7 +275,7 @@ import torch.nn as nn
 ce_loss = nn.CrossEntropyLoss()
 
 logits = torch.tensor([[2.0, 0.5, -1.0]])  # 1 example, 3 classes
-target = torch.tensor([0])                  # true class is 0
+target = torch.tensor([0])                 # true class is 0
 
 loss = ce_loss(logits, target)
 print(f'Cross-entropy loss: {loss:.4f}')
@@ -243,21 +283,21 @@ print(f'Cross-entropy loss: {loss:.4f}')
 # Manual calculation to verify:
 probs    = torch.softmax(logits, dim=1)
 manual   = -torch.log(probs[0, 0])          # -log P(class 0)
-print(f'Manual:             {manual:.4f}')   # should match
+print(f'Manual (to verify): {manual:.4f}')  # should match
 
 # ── Multi-label classification (non-exclusive classes) ────────────────
 # nn.BCEWithLogitsLoss = sigmoid + binary CE, applied element-wise
 bce_loss = nn.BCEWithLogitsLoss()
 
 logits_ml = torch.tensor([[1.5, -0.5, 2.0]])          # 3 independent outputs
-target_ml = torch.tensor([[1.0,  0.0, 1.0]])           # classes 0 and 2 are present
-print(f'Multi-label BCE: {bce_loss(logits_ml, target_ml):.4f}')
+target_ml = torch.tensor([[1.0,  0.0, 1.0]])          # classes 0 and 2 are present
+print(f'Multi-label BCE:    {bce_loss(logits_ml, target_ml):.4f}')
 
 # ── Quadratic (L2) loss — less common but useful to know ─────────────
 mse = nn.MSELoss()
 pred   = torch.tensor([[0.8, 0.1, 0.1]])
 target_oh = torch.tensor([[1.0, 0.0, 0.0]])
-print(f'MSE loss: {mse(pred, target_oh):.4f}')
+print(f'MSE loss:           {mse(pred, target_oh):.4f}')
 ```
 
 *Code 4 – Loss functions for neural networks. The critical rule: `nn.CrossEntropyLoss` and `nn.BCEWithLogitsLoss` both expect raw logits, not probabilities. Passing probabilities through softmax before the loss is a common mistake that causes numerical instability.*
@@ -345,18 +385,18 @@ print(f'Forward: ŷ={a2.item():.4f}, y={y.item()}, loss={loss.item():.4f}')
 
 # ── BACKWARD PASS ─────────────────────────────────────────────────────
 # Equation 1: error at output layer
-delta2 = (a2 - y) * sigmoid_d(z2)    # δ⁽ᴸ⁾ = (ŷ - y) ⊙ σ'(z⁽ᴸ⁾)
+delta2 = (a2 - y) * sigmoid_d(z2)             # δ⁽ᴸ⁾ = (ŷ - y) ⊙ σ'(z⁽ᴸ⁾)
 
 # Equation 3 & 4: gradients for W2 and b2
 dW2 = delta2.unsqueeze(1) * a1.unsqueeze(0)   # ∂J/∂W⁽²⁾ = δ⁽³⁾ aᵀ⁽²⁾
-db2 = delta2                                    # ∂J/∂b⁽²⁾ = δ⁽³⁾
+db2 = delta2                                  # ∂J/∂b⁽²⁾ = δ⁽³⁾
 
 # Equation 2: backpropagate error to layer 1
-delta1 = (W2.T @ delta2) * sigmoid_d(z1)       # δ⁽²⁾ = W⁽²⁾ᵀ δ⁽³⁾ ⊙ σ'(z⁽²⁾)
+delta1 = (W2.T @ delta2) * sigmoid_d(z1)      # δ⁽²⁾ = W⁽²⁾ᵀ δ⁽³⁾ ⊙ σ'(z⁽²⁾)
 
 # Equation 3 & 4: gradients for W1 and b1
-dW1 = delta1.unsqueeze(1) * x.unsqueeze(0)     # ∂J/∂W⁽¹⁾ = δ⁽²⁾ aᵀ⁽¹⁾
-db1 = delta1                                    # ∂J/∂b⁽¹⁾ = δ⁽²⁾
+dW1 = delta1.unsqueeze(1) * x.unsqueeze(0)    # ∂J/∂W⁽¹⁾ = δ⁽²⁾ aᵀ⁽¹⁾
+db1 = delta1                                  # ∂J/∂b⁽¹⁾ = δ⁽²⁾
 
 print(f'dW2: {dW2}')
 print(f'dW1: {dW1}')
@@ -413,13 +453,13 @@ for act_name, act_cls in [('Sigmoid', nn.Sigmoid), ('ReLU', nn.ReLU)]:
 
     # Look at gradient magnitude in the FIRST layer
     first_grad = net[0].weight.grad.abs().mean().item()
-    print(f'{act_name:s}  first-layer gradient mean: {first_grad:.12f}')
+    print(f'{act_name:10s}  first-layer gradient mean: {first_grad:.12f}')
 
-# Sigmoid → gradient is ~0.0000000001 (vanished over 10 layers)
-# ReLU    → gradient is ~0.00001      (healthier, doesn't vanish completely)
+# Sigmoid → first-layer gradient is ~0.0000000001 (vanished over 10 layers)
+# ReLU    → first-layer gradient is ~0.00001      (healthier, doesn't vanish completely)
 ```
 
-*Code 6 – Demonstrating the vanishing gradient problem. With 10 sigmoid layers, the gradient at the first layer is effectively zero. With ReLU, gradients remain healthy throughout the network.*
+*Code 6 – Demonstrating the vanishing gradient problem. With 10 sigmoid layers, the gradient at the first layer is effectively zero. With ReLU, gradients are healthier throughout the network.*
 
 ### 7.2  Overfitting and Regularisation
 
@@ -443,26 +483,47 @@ The standard diagnostic is to plot training loss and validation loss over epochs
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset, random_split
+from matplotlib import pyplot as plt
 
-# ── Training loop with loss curve monitoring ──────────────────────────
+# ── Training loop with early stopping ─────────────────────────────────
 torch.manual_seed(0)
-N = 1000
-X = torch.randn(N, 20)
-y = (X[:, 0] + X[:, 1] > 0).long()       # simple rule
-dataset    = TensorDataset(X, y)
+N_per_class = 500
+
+# Class 0: points near the origin
+angle_inner = 2 * torch.pi * torch.rand(N_per_class)
+radius_inner = 0.8 * torch.sqrt(torch.rand(N_per_class))
+X_inner = torch.stack((radius_inner * torch.cos(angle_inner),
+                       radius_inner * torch.sin(angle_inner)), dim=1)
+
+# Class 1: points farther away, forming a ring
+angle_outer = 2 * torch.pi * torch.rand(N_per_class)
+radius_outer = torch.sqrt(1.2**2 + (2.0**2 - 1.2**2) * torch.rand(N_per_class))
+X_outer = torch.stack((radius_outer * torch.cos(angle_outer),
+                       radius_outer * torch.sin(angle_outer)), dim=1)
+
+# Join the two classes into a single dataset
+X = torch.cat((X_inner, X_outer))
+y = torch.cat((torch.zeros(N_per_class), torch.ones(N_per_class))).long()
+dataset = TensorDataset(X, y)
 train_ds, val_ds = random_split(dataset, [800, 200])
 
-model     = nn.Sequential(nn.Linear(20,64), nn.ReLU(),
-                           nn.Linear(64,64), nn.ReLU(),
-                           nn.Linear(64, 2))
-optimiser = torch.optim.SGD(model.parameters(), lr=0.01, weight_decay=1e-3)
-loss_fn   = nn.CrossEntropyLoss()
+# A neural network can learn the nonlinear circular decision boundary.
+model = nn.Sequential(
+    nn.Linear(2, 64), nn.ReLU(),
+    nn.Linear(64, 64), nn.ReLU(),
+    nn.Linear(64, 2),
+)
+optimiser = torch.optim.SGD(model.parameters(), lr=0.1, weight_decay=1e-3)
+loss_fn = nn.CrossEntropyLoss()
 
 train_losses, val_losses = [], []
 best_val_loss, best_epoch = float('inf'), 0
+best_state = None
+patience = 8
+min_delta = 5e-3
+epochs_without_improvement = 0
 
 for epoch in range(100):
-    # ── Training ──────────────────────────────────────────────────────
     model.train()
     epoch_loss = 0
     for X_b, y_b in DataLoader(train_ds, batch_size=64, shuffle=True):
@@ -473,23 +534,57 @@ for epoch in range(100):
         epoch_loss += loss.item()
     train_losses.append(epoch_loss / len(train_ds) * 64)
 
-    # ── Validation ────────────────────────────────────────────────────
     model.eval()
     with torch.no_grad():
         X_val, y_val = val_ds[:]
         val_loss = loss_fn(model(X_val), y_val).item()
     val_losses.append(val_loss)
 
-    # Early stopping: save best model
-    if val_loss < best_val_loss:
+    # Early stopping: Stop after `patience` epochs without a meaningful validation improvement.
+    if val_loss < best_val_loss - min_delta:
         best_val_loss = val_loss
-        best_epoch    = epoch
-        best_state    = {k: v.clone() for k, v in model.state_dict().items()}
+        best_epoch = epoch
+        best_state = {k: v.clone() for k, v in model.state_dict().items()}
+        epochs_without_improvement = 0
+    else:
+        epochs_without_improvement += 1
+        if epochs_without_improvement >= patience:
+            print(f'Early stopping at epoch {epoch + 1}')
+            break
 
-print(f'Best epoch: {best_epoch}  (val loss: {best_val_loss:.4f})')
+print(f'Best epoch: {best_epoch + 1}  (val loss: {best_val_loss:.4f})')
+print(f'Epochs actually run: {len(train_losses)}')
 
-# Restore best weights before evaluation on test set
+# Restore the best weights, rather than the weights from the final epoch.
 model.load_state_dict(best_state)
+
+# Plot training and validation loss curves
+epochs = range(1, len(train_losses) + 1)
+plt.figure(figsize=(8, 4))
+plt.plot(epochs, train_losses, label='Train Loss')
+plt.plot(epochs, val_losses, label='Validation Loss')
+plt.axvline(best_epoch + 1, color='r', linestyle='--', label='Best Epoch')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.title('Early Stopping on Concentric Circles')
+plt.legend()
+plt.show()
+
+# Plot data points and decision boundary
+plt.figure(figsize=(6, 6))
+plt.scatter(X_inner[:, 0], X_inner[:, 1], color='blue', alpha=0.5, label='Class 0')
+plt.scatter(X_outer[:, 0], X_outer[:, 1], color='orange', alpha=0.5, label='Class 1')
+xx, yy = torch.meshgrid(torch.linspace(-2, 2, 200), torch.linspace(-2, 2, 200), indexing='ij')
+grid = torch.stack((xx.flatten(), yy.flatten()), dim=1)
+with torch.no_grad():
+    logits = model(grid)
+    probs = torch.softmax(logits, dim=1)[:, 1].reshape(xx.shape)
+plt.contourf(xx, yy, probs, levels=50, cmap='coolwarm', alpha=0.6)
+plt.colorbar(label='P(Class 1)')
+plt.xlabel('x1')
+plt.ylabel('x2')
+plt.title('Decision Boundary Learned by Neural Network')
+plt.legend()
 ```
 
 *Code 7 – Training loop with validation monitoring and early stopping. The best model state is saved whenever validation loss improves; we restore it at the end rather than using the final (possibly overfit) weights.*
