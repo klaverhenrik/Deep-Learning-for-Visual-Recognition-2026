@@ -23,7 +23,13 @@ The universal approximation theorem formalises the intuition: a fully connected 
 
 The perceptron is the simplest artificial neuron. It computes the inner product of its weight vector $\mathbf{w}$ with the input vector $\mathbf{x}$, adds a bias $b$, and fires a 1 if the result exceeds zero:
 
-$$\text{output} = \begin{cases} 1 & \text{if } \mathbf{w}^T\mathbf{x} + b > 0 \\ 0 & \text{otherwise} \end{cases}$$
+$$
+\text{output} =
+\begin{cases}
+1 & \text{if } \mathbf{w}^T\mathbf{x} + b > 0 \\
+0 & \text{otherwise}
+\end{cases}
+$$
 
 The weight vector $\mathbf{w}$ can be thought of as a template: the inner product $\mathbf{w}^T\mathbf{x}$ is large when $\mathbf{x}$ resembles $\mathbf{w}$, and small (or negative) when $\mathbf{x}$ is dissimilar. This is why perceptrons can classify images — if the weights represent a prototype of the target class, the neuron fires when an input matches that prototype.
 
@@ -33,13 +39,11 @@ However, the step activation function has zero derivative everywhere (and is und
 
 The logistic unit is the perceptron with the step function replaced by a sigmoid:
 
-$$
-\text{output} =
-\begin{cases}
-1 & \text{if } \mathbf{w}^T\mathbf{x} + b > 0 \\
-0 & \text{otherwise}
-\end{cases}
-$$
+$$h_{w,b}(\mathbf{x}) = \sigma(\mathbf{w}^T\mathbf{x} + b) \quad \text{where} \quad \sigma(z) = \frac{1}{1 + \exp(-z)}$$
+
+[![The logistic sigmoid function](https://upload.wikimedia.org/wikipedia/commons/8/88/Logistic-curve.svg)](https://en.wikipedia.org/wiki/File:Logistic-curve.svg)
+
+*Figure – The logistic sigmoid function. [Source: Wikipedia](https://en.wikipedia.org/wiki/File:Logistic-curve.svg).* 
 
 The sigmoid is a smooth S-shaped curve that maps any real number to $(0, 1)$. Its derivative $\sigma'(z) = \sigma(z)(1 - \sigma(z))$ is positive everywhere, so gradient descent can always make progress. The output can be interpreted as the probability $P(y = 1 \mid \mathbf{x})$.
 
@@ -176,12 +180,6 @@ for name, param in model.named_parameters():
 # Total parameters
 total = sum(p.numel() for p in model.parameters())
 print(f'Total parameters: {total}')   # 4*3+4 + 4*4+4 + 2*4+2 = 46
-
-# Example forward pass
-x = torch.randn(1, 3)  # random input
-logits = model(x)      # forward pass
-print(f'Example Input: {x.tolist()}')
-print(f'Example Output (logits): {logits.tolist()}')
 ```
 
 *Code 2 – An MLP built from `nn.Linear` layers. Each layer stores $\mathbf{W}$ and $\mathbf{b}$. The `forward()` method implements the equations $\mathbf{a}^{(j+1)} = \sigma(\mathbf{W}^{(j)}\mathbf{a}^{(j)} + \mathbf{b}^{(j)})$ explicitly.*
@@ -244,7 +242,6 @@ with torch.no_grad():
 
 out = net(x)
 print('nn.Sequential output:', out.detach().round(decimals=3))
-
 ```
 
 *Code 3 – Manual forward propagation showing every intermediate tensor. PyTorch records these in the computation graph automatically. The `nn.Sequential` version is identical in computation but hides the intermediates.*
@@ -261,11 +258,13 @@ $$J(W,b) = -\frac{1}{n} \sum_i \sum_k y_k^{(i)} \log h_{W,b}(\mathbf{x}^{(i)})_k
 
 Because $\mathbf{y}$ is one-hot, only one term in the inner sum is non-zero for each training example: the term corresponding to the true class. The loss therefore reduces to $-\log(\text{predicted probability of the correct class})$, which is large when the model is wrong and approaches zero when the model is confident and correct.
 
-### 5.2  The Extended Loss (for Multi-Label Classification)
+### 5.2  Extended Binary Cross-Entropy
 
 When class labels are not mutually exclusive — a photo may contain both a dog and a cat — we use a separate sigmoid per output unit instead of a shared softmax. The extended binary cross-entropy loss then has contributions from both the positive and negative terms for every class:
 
-$$J(W,b) = -\frac{1}{n} \sum_i \sum_k \left[ y_k^{(i)} \log h_k + (1 - y_k^{(i)}) \log(1 - h_k) \right]$$
+$$J(W,b) = -\frac{1}{n} \sum_i \sum_k \left[ y_k^{(i)} \log h_{W,b}(\mathbf{x}^{(i)})_k + (1 - y_k^{(i)}) \log(1 - h_{W,b}(\mathbf{x}^{(i)})_k) \right]$$
+
+Note that each output unit uses a sigmoid rather than a shared softmax, that is $h_{W,b}(\mathbf{z_k}^{(i)})_k = \sigma(z_k)$.
 
 This is the loss from Lecture 2's logistic regression, applied independently to each of the $K$ output units. Use `nn.BCEWithLogitsLoss` for multi-label problems and `nn.CrossEntropyLoss` for mutually exclusive classes.
 
@@ -302,6 +301,12 @@ mse = nn.MSELoss()
 pred   = torch.tensor([[0.8, 0.1, 0.1]])
 target_oh = torch.tensor([[1.0, 0.0, 0.0]])
 print(f'MSE loss:           {mse(pred, target_oh):.4f}')
+
+# Output:
+# Cross-entropy loss: 0.2413
+# Manual (to verify): 0.2413
+# Multi-label BCE:    0.2675
+# MSE loss:           0.0200
 ```
 
 *Code 4 – Loss functions for neural networks. The critical rule: `nn.CrossEntropyLoss` and `nn.BCEWithLogitsLoss` both expect raw logits, not probabilities. Passing probabilities through softmax before the loss is a common mistake that causes numerical instability.*
@@ -327,6 +332,10 @@ Backpropagation's central concept is the error signal $\delta_i^{(l)}$, defined 
 $$\delta_i^{(l)} = \frac{\partial J}{\partial z_i^{(l)}}$$
 
 Intuition (the demon analogy from the slides): imagine a demon sitting at neuron $i$ in layer $l$. It adds a small perturbation $\Delta z_i^{(l)}$ to the pre-activation. The resulting change in the loss is $\delta_i^{(l)} \cdot \Delta z_i^{(l)}$. A large $|\delta|$ means that unit has a large influence on the loss — its pre-activation should be corrected. The $\delta$ signals travel backwards through the network, from output to input, accumulating information about how each unit contributed to the error.
+
+![Demon analogy for backpropagation](images/tikz19.png)
+
+*Figure – The demon analogy for the backpropagated error signal. [Source: Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/images/tikz19.png).*
 
 ### 6.3  The Four Backpropagation Equations
 
@@ -431,7 +440,7 @@ print('Manual dW1 matches autograd:', torch.allclose(dW1, W1_t.grad, atol=1e-6))
 
 Saturation occurs when a sigmoid neuron's input $z^{(l)}$ is very large in magnitude. In this regime the sigmoid's derivative $\sigma'(z) \approx 0$, meaning almost no gradient flows through that neuron. Looking at the backprop equations, $\boldsymbol{\delta}^{(l)}$ is multiplied element-wise by $\sigma'(\mathbf{z}^{(l)})$ at every layer. In a deep network with $L$ layers, the gradient reaching the first layer is a product of $L$ such terms — each less than 0.25 (the maximum of $\sigma'$) — so the gradient shrinks exponentially as it travels backwards. Early layers learn extremely slowly or not at all. This is the vanishing gradient problem.
 
-The most practical solution is to replace sigmoid with ReLU in hidden layers. ReLU has a constant derivative of 1 for positive inputs, so gradients pass through unchanged. This is why modern networks use ReLU by default. More sophisticated solutions — residual connections and batch normalisation — are covered in Lectures 5–7.
+An easy and practical solution is to replace sigmoid with ReLU in hidden layers. ReLU has a constant derivative of 1 for positive inputs, so gradients pass through unchanged. This is why modern networks use ReLU by default. More sophisticated solutions — residual connections and batch normalisation — are covered in Lectures 5–7.
 
 ```python
 import torch
@@ -482,6 +491,10 @@ The standard diagnostic is to plot training loss and validation loss over epochs
 - **Both decreasing**: the model is still learning — continue training.
 - **Training loss decreasing, validation loss plateauing**: the model is approaching its best generalisation — consider stopping soon.
 - **Training loss decreasing, validation loss increasing**: the model is overfitting — stop training here (early stopping) or add regularisation.
+
+![Early stopping using training and validation loss curves](https://miro.medium.com/v2/resize:fit:1100/format:webp/1*ffl8ETcZxLKgQrTDDpcv5A.png)
+
+*Figure – Early stopping identified from training and validation loss curves. [Source: Medium](https://miro.medium.com/v2/resize:fit:1100/format:webp/1*ffl8ETcZxLKgQrTDDpcv5A.png).*
 
 ```python
 import torch
@@ -666,11 +679,59 @@ for var, name in [(x, 'x'), (y, 'y'), (z, 'z')]:
 
 ### 8.3  The Chain Rule in a Neuron
 
-The same principle scales to an entire neural network. Each layer is a node in the computation graph. During the backward pass, each node receives the gradient from the layer above ($\partial L/\partial \mathbf{z}$, the 'upstream gradient'), computes its local gradient ($\partial \mathbf{z}/\partial \text{input}$), and multiplies them together to produce the gradient for the layer below:
+The same principle scales to an entire neural network. Each layer is a node in the computation graph. During the backward pass, each node receives the gradient of the loss with respect to its output — the **upstream gradient** — and applies the chain rule:
 
-$$\frac{\partial L}{\partial \text{input}} = \frac{\partial L}{\partial \mathbf{z}} \cdot \frac{\partial \mathbf{z}}{\partial \text{input}} \quad \leftarrow \text{chain rule}$$
+$$
+\boxed{\text{gradient w.r.t. input}
+=
+\text{upstream gradient}
+\times
+\text{local derivative}}
+$$
 
-For a linear layer $\mathbf{z} = \mathbf{W}\mathbf{x} + \mathbf{b}$, the local gradients are $\partial \mathbf{z}/\partial \mathbf{x} = \mathbf{W}$ (so $\partial L/\partial \mathbf{x} = \mathbf{W}^T \cdot \partial L/\partial \mathbf{z}$) and $\partial \mathbf{z}/\partial \mathbf{W} = \mathbf{x}^T$ (so $\partial L/\partial \mathbf{W} = \partial L/\partial \mathbf{z} \cdot \mathbf{x}^T$). For a sigmoid gate $z = \sigma(s)$, the local gradient is $\partial z/\partial s = \sigma(s)(1-\sigma(s))$. Composing these through a full network is exactly what the manual backprop equations described — autograd just does it automatically.
+For a scalar node $z=f(x)$, this is simply
+
+$$
+\frac{\partial L}{\partial x}
+=
+\frac{\partial L}{\partial z}
+\frac{\partial z}{\partial x}.
+$$
+
+A node applies this rule to each of its inputs. For a linear layer $\mathbf{z}=\mathbf{W}\mathbf{x}+\mathbf{b}$, the inputs are $\mathbf{x}$, $\mathbf{W}$, and $\mathbf{b}$. Given the upstream gradient $\partial L/\partial\mathbf{z}$, the chain rule gives
+
+$$
+\frac{\partial L}{\partial \mathbf{W}}
+=
+\frac{\partial L}{\partial \mathbf{z}}\mathbf{x}^T,
+\qquad
+\frac{\partial L}{\partial \mathbf{b}}
+=
+\frac{\partial L}{\partial \mathbf{z}},
+\qquad
+\frac{\partial L}{\partial \mathbf{x}}
+=
+\mathbf{W}^T\frac{\partial L}{\partial \mathbf{z}}.
+$$
+
+The first two are gradients for the layer's trainable parameters; the last ($\frac{\partial L}{\partial \mathbf{x}}$) is propagated backward to the preceding node (i.e., it becomes the upstream gradient of that node).
+
+For a sigmoid node $z=\sigma(s)$, the local derivative is
+
+$$
+\frac{\partial z}{\partial s}=\sigma(s)(1-\sigma(s)).
+$$
+
+Multiplying it by the upstream gradient gives
+
+$$
+\frac{\partial L}{\partial s}
+=
+\underbrace{\frac{\partial L}{\partial z}}_{\text{upstream gradient}}
+\underbrace{\sigma(s)(1-\sigma(s))}_{\text{local derivative}}.
+$$
+
+Backpropagation repeatedly applies this rule from node to node through the computation graph. PyTorch's autograd engine performs these same chain-rule computations automatically.
 
 ```python
 import torch
