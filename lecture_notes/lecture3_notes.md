@@ -681,7 +681,9 @@ for var, name in [(x, 'x'), (y, 'y'), (z, 'z')]:
 
 The same principle scales to an entire neural network. Each layer is a node in the computation graph. During the backward pass, each node receives the gradient of the loss with respect to its output — the **upstream gradient** — and applies the chain rule:
 
-**gradient w.r.t. input = upstream gradient × local derivative**
+$$
+\boxed{\text{gradient w.r.t. input} = \text{upstream gradient} \times \text{local derivative}}
+$$
 
 For a scalar node $z=f(x)$, this is simply:
 
@@ -697,16 +699,12 @@ A node applies this rule to each of its inputs. For a linear layer $\mathbf{z}=\
 $$
 \frac{\partial L}{\partial \mathbf{W}}
 =
-\frac{\partial L}{\partial \mathbf{z}}\mathbf{x}^T
-$$
-
-$$
+\frac{\partial L}{\partial \mathbf{z}}\mathbf{x}^T,
+\qquad
 \frac{\partial L}{\partial \mathbf{b}}
 =
-\frac{\partial L}{\partial \mathbf{z}}
-$$
-
-$$
+\frac{\partial L}{\partial \mathbf{z}},
+\qquad
 \frac{\partial L}{\partial \mathbf{x}}
 =
 \mathbf{W}^T\frac{\partial L}{\partial \mathbf{z}}
@@ -727,11 +725,9 @@ Multiplying it by the upstream gradient gives:
 $$
 \frac{\partial L}{\partial s}
 =
-\frac{\partial L}{\partial z}
-\sigma(s)(1-\sigma(s))
+\underbrace{\frac{\partial L}{\partial z}}_{\text{upstream gradient}}
+\underbrace{\sigma(s)(1-\sigma(s))}_{\text{local derivative}}
 $$
-
-where $\frac{\partial L}{\partial z}$ is the upstream gradient and $\sigma(s)(1-\sigma(s))$ is the local derivative.
 
 Backpropagation repeatedly applies this rule from node to node through the computation graph. PyTorch's autograd engine performs these same chain-rule computations automatically.
 
