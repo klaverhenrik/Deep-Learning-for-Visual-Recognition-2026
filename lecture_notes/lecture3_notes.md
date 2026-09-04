@@ -712,8 +712,7 @@ $$
 For a scalar node $z=f(x)$, this is simply:
 
 $$
-\frac{\partial L}{\partial x}
-=
+\frac{\partial L}{\partial x}=
 \frac{\partial L}{\partial z}
 \frac{\partial z}{\partial x}
 $$
@@ -721,16 +720,13 @@ $$
 A node applies this rule to each of its inputs. For a linear layer $\mathbf{z}=\mathbf{W}\mathbf{x}+\mathbf{b}$, the inputs are $\mathbf{x}$, $\mathbf{W}$, and $\mathbf{b}$. Given the upstream gradient $\frac{\partial L}{\partial\mathbf{z}}$, the chain rule gives:
 
 $$
-\frac{\partial L}{\partial \mathbf{W}}
-=
+\frac{\partial L}{\partial \mathbf{W}}=
 \frac{\partial L}{\partial \mathbf{z}}\mathbf{x}^T,
 \qquad
-\frac{\partial L}{\partial \mathbf{b}}
-=
+\frac{\partial L}{\partial \mathbf{b}}=
 \frac{\partial L}{\partial \mathbf{z}},
 \qquad
-\frac{\partial L}{\partial \mathbf{x}}
-=
+\frac{\partial L}{\partial \mathbf{x}}=
 \mathbf{W}^T\frac{\partial L}{\partial \mathbf{z}}
 $$
 
@@ -739,16 +735,14 @@ The first two are gradients for the layer's trainable parameters; the last ($\fr
 For a sigmoid node $z=\sigma(s)$, the local derivative is:
 
 $$
-\frac{\partial z}{\partial s}
-=
+\frac{\partial z}{\partial s}=
 \sigma(s)(1-\sigma(s))
 $$
 
 Multiplying it by the upstream gradient gives:
 
 $$
-\frac{\partial L}{\partial s}
-=
+\frac{\partial L}{\partial s}=
 \underbrace{\frac{\partial L}{\partial z}}_{\text{upstream gradient}}
 \underbrace{\sigma(s)(1-\sigma(s))}_{\text{local derivative}}
 $$
