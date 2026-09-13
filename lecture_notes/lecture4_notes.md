@@ -180,7 +180,25 @@ Without padding, every convolution shrinks the feature map. Stack enough layers 
 - It preserves the spatial size (with 'same' padding), allowing very deep architectures.
 - It prevents 'border washing': without padding, border pixels contribute to fewer output positions than central pixels and are effectively under-represented in the feature maps.
 
-In PyTorch, `padding=0` is 'valid' (no padding) and `padding=(kernel_size-1)//2` gives 'same' convolution for odd-sized kernels. Common frameworks also accept the string literals `'valid'` and `'same'` directly.
+In PyTorch, `padding=0` is 'valid' (no padding) and `padding=(kernel_size-1)//2` gives 'same' convolution for odd-sized kernels. Since PyTorch 1.9, `nn.Conv2d` also accepts the string literals `'valid'` and `'same'` directly for `padding` (for `stride=1`), which maps onto exactly the same terminology used by other frameworks:
+
+```python
+import torch
+import torch.nn as nn
+
+x = torch.randn(1, 1, 32, 32)
+
+# The two literal padding modes, spelled out exactly as the terminology
+# is normally introduced: 'valid' = no padding, 'same' = output size
+# matches input size.
+conv_valid = nn.Conv2d(1, 1, kernel_size=5, padding='valid')
+conv_same  = nn.Conv2d(1, 1, kernel_size=5, padding='same')
+
+print('valid:', conv_valid(x).shape)   # → torch.Size([1, 1, 28, 28])  (shrinks)
+print('same: ', conv_same(x).shape)    # → torch.Size([1, 1, 32, 32])  (unchanged)
+```
+
+*Code 3b – The literal `padding='valid'` and `padding='same'` strings are only valid for `stride=1` — for a strided convolution you must fall back to an explicit integer (as in Code 3 above) and compute the padding yourself with the output-size formula.*
 
 ---
 
@@ -431,6 +449,71 @@ print(f'Total parameters: {total:,}')   # ≈ 61,706
 
 *Code 10 – LeNet-5 implemented in PyTorch. The entire network has about 60,000 parameters — tiny by modern standards, but it established the CONV–POOL–FC blueprint.*
 
+### 9.1.1  Inspecting a Model Layer by Layer
+
+Keras provides `model.summary()` out of the box: a table listing every layer's type, output shape, and parameter count. PyTorch has no built-in equivalent, but it is easy to build one using forward hooks — functions that PyTorch calls automatically every time a given submodule finishes its forward pass. Registering a hook on every leaf submodule (a module with no children of its own, e.g. `Conv2d`, `Linear`) lets us record each one's output shape and parameter count with a single dummy forward pass:
+
+```python
+import torch
+
+def summarize(model, input_size, batch_size=1):
+    """A minimal PyTorch equivalent of Keras' model.summary()."""
+    rows = []
+    handles = []
+
+    def make_hook(name):
+        def hook(module, inputs, output):
+            n_params = sum(p.numel() for p in module.parameters(recurse=False))
+            rows.append((name, module.__class__.__name__, tuple(output.shape), n_params))
+        return hook
+
+    # Only leaf modules (no children) — otherwise a container like
+    # `self.features` would also fire its own hook and double-count.
+    for name, module in model.named_modules():
+        if name and len(list(module.children())) == 0:
+            handles.append(module.register_forward_hook(make_hook(name)))
+
+    was_training = model.training
+    model.eval()
+    with torch.no_grad():
+        model(torch.zeros(batch_size, *input_size))
+    model.train(was_training)
+
+    for h in handles:
+        h.remove()
+
+    name_w  = max(len(r[0]) for r in rows) + 2
+    type_w  = max(len(r[1]) for r in rows) + 2
+    shape_w = max(len(str(r[2])) for r in rows) + 2
+    header = f"{'Layer':{name_w}}{'Type':{type_w}}{'Output Shape':{shape_w}}{'Param #'}"
+    print(header)
+    print('-' * len(header))
+    total = 0
+    for name, ltype, shape, n in rows:
+        total += n
+        print(f"{name:{name_w}}{ltype:{type_w}}{str(shape):{shape_w}}{n:,}")
+    print('-' * len(header))
+    print(f"Total parameters: {total:,}")
+    return rows
+
+model = LeNet5()
+summarize(model, input_size=(1, 32, 32))
+```
+
+```text
+Layer  Type    Output Shape     Param #
+---------------------------------------
+conv1  Conv2d  (1, 6, 28, 28)   156
+conv2  Conv2d  (1, 16, 10, 10)  2,416
+fc1    Linear  (1, 120)         48,120
+fc2    Linear  (1, 84)          10,164
+fc3    Linear  (1, 10)          850
+---------------------------------------
+Total parameters: 61,706
+```
+
+*Code 10b – A hook-based `summarize()` utility applied to `LeNet5`. Notice what is **missing** compared to a Keras summary of an equivalent model: there are no rows for the pooling layers or the ReLU activations. This is because `LeNet5.forward()` calls `F.avg_pool2d(...)` and `F.relu(...)` as plain *functions*, not as submodules — and a forward hook can only fire on registered `nn.Module` children (here: `conv1`, `conv2`, `fc1`, `fc2`, `fc3`). If you want pooling or activation layers to appear as their own rows, define them as modules in `__init__` (e.g. `self.pool = nn.AvgPool2d(2)`) and call `self.pool(x)` in `forward()` instead of the functional form. This is a good illustration of a subtlety that trips people up when moving between frameworks: a Keras layer added with `model.add(...)` is always a module and always shows up in `model.summary()`, whereas the same operation in PyTorch may be written as a stateless function call that is invisible to any tool that only inspects registered submodules.*
+
 ### 9.2  AlexNet (2012)
 
 AlexNet, winner of the ImageNet challenge in 2012, was essentially a deeper and wider LeNet trained on GPUs. Its key innovations were:
@@ -486,15 +569,7 @@ class AlexNet(nn.Module):
         return self.classifier(x)    # → (batch, num_classes)
 
 model = AlexNet(num_classes=10)
-total = sum(p.numel() for p in model.parameters())
-print(f'Parameters: {total:,}')   # ≈ 57 million
-
-# Verify output shapes
-x = torch.randn(2, 3, 224, 224)  # batch of 2 images (3 channels, 224x224)
-out = model(x)
-for layer in model.features:
-    x = layer(x)
-    print(f'{layer.__class__.__name__:20s}  →  {tuple(x.shape)}')
+summarize(model, input_size=(3, 224, 224))
 ```
 
 *Code 11 – AlexNet in PyTorch. The network has ~57 million parameters, the vast majority in the three large fully connected layers ($4096 \to 4096 \to 1000$). This is one motivation for replacing FC layers with GAP + smaller classifiers in later architectures.*
