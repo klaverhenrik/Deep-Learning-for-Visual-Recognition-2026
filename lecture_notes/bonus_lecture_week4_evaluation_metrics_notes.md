@@ -52,9 +52,9 @@ Precision and recall are defined in terms of four outcome categories. Given a po
 - **False negative (FN)**: model predicted negative, ground truth is positive.
 - **True negative (TN)**: model predicted negative, ground truth is negative.
 
-$$\text{Precision} = \frac{\#\text{TP}}{\#\text{TP} + \#\text{FP}}$$
+$$\text{Precision} = \frac{N_{\mathrm{TP}}}{N_{\mathrm{TP}} + N_{\mathrm{FP}}}$$
 
-$$\text{Recall} = \frac{\#\text{TP}}{\#\text{TP} + \#\text{FN}}$$
+$$\text{Recall} = \frac{N_{\mathrm{TP}}}{N_{\mathrm{TP}} + N_{\mathrm{FN}}}$$
 
 **Precision** answers: of everything the model said was positive, what fraction actually was? A precision of 1.0 means every prediction was correct, but says nothing about how many true positives were missed.
 
@@ -66,9 +66,9 @@ For object detection specifically: precision tells us how many of the predicted 
 
 Related metrics sometimes reported alongside these:
 
-$$\text{Accuracy} = \frac{\#\text{TP} + \#\text{TN}}{\#\text{TP} + \#\text{TN} + \#\text{FP} + \#\text{FN}}$$
+$$\text{Accuracy} = \frac{N_{\mathrm{TP}} + N_{\mathrm{TN}}}{N_{\mathrm{TP}} + N_{\mathrm{TN}} + N_{\mathrm{FP}} + N_{\mathrm{FN}}}$$
 
-$$\text{Specificity (true negative rate)} = \frac{\#\text{TN}}{\#\text{TN} + \#\text{FP}}$$
+$$\text{Specificity (true negative rate)} = \frac{N_{\mathrm{TN}}}{N_{\mathrm{TN}} + N_{\mathrm{FP}}}$$
 
 ---
 
