@@ -769,6 +769,8 @@ The exercises are representative of the types of questions you might encounter a
 
 ### Exercise 1 — Reading Loss Curves
 
+![Loss curves illustrating learning-rate problems](images/lecture6_ex1_loss_curves.png)
+
 *Figure: four loss-curve plots — (A) loss shoots up to NaN after a few steps, (B) loss barely moves over many steps, (C) loss trends down but oscillates noticeably, (D) loss decreases smoothly.*
 
 **(a)** For each curve, say whether the learning rate is too high, too low, slightly too high, or good.
@@ -777,6 +779,7 @@ The exercises are representative of the types of questions you might encounter a
 
 **(c)** A second figure shows training loss decreasing steadily while validation loss decreases at first and then rises. What is happening, and name two remedies from this lecture.
 
+![Second figure](images\lecture6_ex1c_overfitting.png)
 ---
 
 ### Exercise 2 — Momentum, Conceptually
@@ -824,6 +827,7 @@ opt_d = torch.optim.Adam(model.parameters(), lr=1e-3)
 
 ### Exercise 5 — Learning Rate Schedules
 
+![Learning rate scheduler](images\lecture6_ex5_lr_schedules.png)
 *Figure: four learning-rate-vs-epoch curves — (A) a staircase that drops sharply at fixed intervals, (B) a smooth curve starting high and ending near zero, shaped like half a cosine wave, (C) a curve that ramps up linearly for a few epochs before following curve (B), (D) a flat line that drops only once, mid-training, after a dashed marker labelled "validation loss stopped improving".*
 
 **(a)** Match each curve to its name: step decay, cosine annealing, linear warmup + cosine decay, `ReduceLROnPlateau`.
@@ -866,6 +870,7 @@ For each pair of (dataset, augmentation), say whether the augmentation is safe t
 
 ### Exercise 8 — The Six-Step Search Protocol
 
+![Loss values](images\lecture6_ex8_initial_loss.png)
 *Figure: a bar showing "initial loss ≈ 2.3" for a 10-class cross-entropy setup, next to a second scenario where the measured initial loss is noticeably higher.*
 
 **(a)** Step 1 of the protocol checks that the loss at initialisation roughly matches a known theoretical value for the given number of classes and loss function. What would a large mismatch suggest?
@@ -880,6 +885,7 @@ For each pair of (dataset, augmentation), say whether the augmentation is safe t
 
 ### Exercise 9 — Random vs Grid Search
 
+![hypterparameter search](images\lecture6_ex9_grid_vs_random.png)
 *Figure: two scatter plots over the same 2D hyperparameter space (one axis matters a lot for performance, the other barely matters) — one showing a grid search's evenly spaced points, the other showing a random search's scattered points, with the resulting model performance along the "important" axis indicated by colour.*
 
 **(a)** Looking at the grid search panel, explain why many of its runs end up testing essentially the same value of the important hyperparameter.
@@ -892,6 +898,7 @@ For each pair of (dataset, augmentation), say whether the augmentation is safe t
 
 ### Exercise 10 — Monitoring Gradients and Activations
 
+![Gradient norms](images\lecture6_ex10_gradient_norms.png)
 *Figure: a bar chart of gradient norm per layer for a 5-layer network, showing norms shrinking sharply from the last layer to the first.*
 
 **(a)** What problem does this pattern suggest, and in which layers is it worst?
