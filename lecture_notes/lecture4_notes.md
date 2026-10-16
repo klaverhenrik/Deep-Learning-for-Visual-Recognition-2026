@@ -737,6 +737,12 @@ The core message of this lecture is simple: CNNs are efficient because they expl
 
 **(d)** A network applies three consecutive convolutions, each with kernel size 3, stride 1, and no padding, to a $32 \times 32$ input. What is the spatial size after all three convolutions? What is the receptive field of a single output neuron after all three layers?
 
+**(e)** A $9 \times 9$ input is passed through a $3 \times 3$ convolution with stride 1 and no padding. What is the output spatial size?
+
+**(f)** The same $9 \times 9$ input is passed through a $3 \times 3$ convolution with stride 1 and padding 1 instead. What is the output spatial size, and what name does the lecture give to this kind of padding (the kind that keeps spatial size unchanged)?
+
+**(g)** A $10 \times 10$ feature map with 16 channels is passed through a $1 \times 1$ convolution with 48 filters, stride 1, no padding. What is the output shape (height, width, channels)? Explain in one sentence why a $1 \times 1$ convolution never changes the spatial dimensions, regardless of stride-1 padding choices.
+
 ---
 
 ### Exercise 2 — Parameter Counting in Convolutional Layers
