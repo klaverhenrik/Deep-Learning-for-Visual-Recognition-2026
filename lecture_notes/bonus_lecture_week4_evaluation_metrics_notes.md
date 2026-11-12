@@ -217,6 +217,150 @@ A common pitfall: using accuracy on an imbalanced dataset and reporting a high n
 
 ---
 
+## 12  Exercises
+The exercises are representative of the types of questions you might encounter at the written exam (except that the exam questions will be formulated as multiple choice). You are welcome to work on the exercises during TØ on Thursdays.
+
+### Exercise 1 — How Metrics Evolved with the Task
+
+**(a)** The ILSVRC challenge added a new task almost every year. For each of the four tasks below, state the new metric (or concept) that the task made necessary:
+
+- Image classification into 1,000 categories
+- Classification plus drawing a bounding box around the object
+- Fine-grained classification, where predictions are confidence scores
+- Detecting and labelling every instance of 200 categories in an image
+
+**(b)** Explain in one or two sentences why the metrics used for plain classification are not sufficient for object detection. What additional question must the metric answer?
+
+**(c)** A friend proposes to evaluate a face detector simply by reporting its "accuracy". Explain what is unclear or impossible about this in a detection setting (think about what a true negative would be).
+
+---
+
+### Exercise 2 — Top-1 and Top-5 Error
+
+**(a)** Explain the difference between top-1 error and top-5 error.
+
+**(b)** For any classifier and any test set, which of the two is always the smaller (or equal)? Explain why, without using any numbers.
+
+**(c)** Why was top-5 error a reasonable primary metric for ImageNet, with its 1,000 classes? Give the argument from the lecture in your own words.
+
+**(d)** Give an example of an application where reporting top-5 accuracy would be misleading or unacceptable, and explain why.
+
+**(e)** On a dataset with only three very different classes (cat, truck, flower), would you expect top-1 and top-5 error to differ much? Explain.
+
+---
+
+### Exercise 3 — What IoU Does and Does Not Tell You
+
+**(a)** Write down the definition of Intersection over Union, and explain in words what the numerator and the denominator measure.
+
+**(b)** IoU is described as "the gateway to all detection metrics". Explain how it turns the problem of comparing two boxes into a true-positive / false-positive decision, and what role the threshold plays.
+
+**(c)** The standard threshold is 0.5. What would you expect to happen to the number of true positives (and thus to precision and recall) if the threshold were raised to 0.9? What property of the predicted boxes is the stricter threshold really testing?
+
+**(d)** Two predicted boxes for the same object have the same IoU with the ground truth. One is too large and contains the object, the other is too small and lies inside it. Is this possible? What does it tell you about what a single IoU number does and does not reveal?
+
+**(e)** A prediction has the right shape and size but is placed entirely beside the object (zero overlap). What is its IoU, and what is it counted as, even if the class label is correct?
+
+---
+
+### Exercise 4 — Reading a Confusion Matrix
+
+![Confusion matrix](images/bonus_ex4_confusion_matrix.png)
+
+*Figure: a $4 \times 4$ confusion matrix for the classes car, van, truck and bus (rows: true class, columns: predicted class). The diagonal entries are large for truck and bus. The car and van rows each have a large off-diagonal entry in the other's column. All other off-diagonal entries are small.*
+
+**(a)** What do the rows and columns of a confusion matrix represent, and what do the diagonal and off-diagonal entries represent?
+
+**(b)** Using the figure, which two classes does the model confuse with each other? Why is this information invisible if only a single accuracy number is reported?
+
+**(c)** A binary confusion matrix has the four cells TP, FP, FN and TN. Which of the four cells is not used at all in the formulas for precision and recall? Explain why this makes precision and recall suitable for problems with a huge number of negatives (such as detecting objects in an image, where almost every possible box is negative).
+
+---
+
+### Exercise 5 — Precision, Recall and the Threshold
+
+**(a)** Explain in one sentence each what precision and recall measure, in terms of the question they answer about the model's predictions.
+
+**(b)** A classifier outputs a confidence score. Explain why lowering the decision threshold typically increases recall and decreases precision, and why the two cannot both be pushed to their maximum at the same time.
+
+**(c)** A model that predicts "positive" for only the single image it is most certain about can achieve precision 1.0. Explain why this model is nevertheless useless, and which metric exposes this.
+
+
+---
+
+### Exercise 6 — Reading Precision–Recall Curves
+
+![Precision–recall curves](images/bonus_ex6_pr_curves.png)
+
+*Figure: precision–recall curves of three models on the same test set, in which 20% of the examples are positive. Model A stays close to precision 1.0 until recall 0.5 and ends near 0.6 at recall 1.0. Model B starts at about 0.8 and decreases steadily to about 0.3 at recall 1.0. Model C starts at precision 1.0, falls quickly to about 0.6 at recall 0.4 and ends near 0.2 at recall 1.0. C lies above B only for recall below roughly 0.25. A horizontal dashed line at precision 0.2 is labelled "no skill".*
+
+**(a)** Which model is unambiguously the best, and why can you say so without any further analysis?
+
+**(b)** Compare B and C. Which one would you pick for an application that needs a precision above 0.9 and can accept finding only a small fraction of the objects? Which one would you pick if most objects must be found?
+
+**(d)** Where on the PR plot would a perfect classifier be, and how can the point of a curve that is closest to this ideal be used to choose a threshold? Give one reason why this rule might nevertheless be the wrong choice in a particular application.
+
+**(e)** Without calculating anything, rank the three models by average precision (AP). Explain your reasoning in terms of the area under each curve.
+
+---
+
+### Exercise 7 — AP, F1 and AUC
+
+$$\text{AP} = \sum_n (R_n - R_{n-1}) \cdot P_n \qquad\qquad F_1 = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}$$
+
+**(a)** What do $P_n$ and $R_n$ denote in the AP formula, and what is the role of the factor $(R_n - R_{n-1})$?
+
+**(b)** F1 is the harmonic mean of precision and recall. Consider a classifier with precision 1.0 but recall 0.01. Roughly where does the arithmetic mean of the two lie, and roughly where does F1 lie? What does this tell you about why the harmonic mean is used?
+
+---
+
+### Exercise 8 — mAP and the COCO Metrics
+
+| Detector | AP | AP$_{50}$ | AP$_{75}$ | AP$_S$ | AP$_M$ | AP$_L$ |
+|---|---|---|---|---|---|---|
+| X | 38 | 60 | 41 | 18 | 42 | 55 |
+| Y | 36 | 63 | 36 | 25 | 40 | 46 |
+
+**(a)** Explain how mAP is computed from the per-class AP values. For a given class, what counts as a positive and what as a negative?
+
+**(b)** The column labelled AP in a COCO-style paper is AP@[.5:.95]. What does that mean, and why is it a stricter metric than the AP$_{50}$ used in PASCAL VOC?
+
+**(c)** Detector Y has the highest AP$_{50}$, but detector X has the highest AP$_{75}$. What does this tell you about the boxes the two detectors produce?
+
+**(d)** Which detector would you choose for an application that mainly involves very small objects (e.g. distant pedestrians seen by a drone), and which column of the table did you base your decision on?
+
+---
+
+### Exercise 9 — Choosing the Right Metric
+
+**(a)** For each task below, choose the most appropriate primary metric from the lecture and give a short reason. Name an alternative or a complement where relevant.
+
+- Classifying handwritten digits into 10 balanced classes.
+- Detecting a rare manufacturing defect that occurs in 1 out of every 1,000 products.
+- Evaluating an object detector for traffic scenes, to be compared with results in the research literature.
+- Segmenting tumours in medical scans, where the tumour covers only a tiny fraction of the pixels.
+- Evaluating a GAN that generates faces.
+
+**(b)** A report states "our model reaches 99.5% accuracy" for the rare-defect task. Explain why this number is almost worthless on its own, and which two numbers you would ask for instead.
+
+**(c)** Explain why pixel accuracy is misleading for segmentation of small structures, and why mean IoU is better.
+
+**(d)** Before choosing a metric, the lecture says one should always check one thing about the dataset. What is it, and why?
+
+---
+
+### Exercise 10 — Evaluating Generative Models
+
+**(a)** Explain why evaluating a generative model is harder than evaluating a classifier. What is missing that a classifier test set provides?
+
+**(b)** Fréchet Inception Distance (FID) compares two sets of images. Which two sets, in which feature space, and is a high or a low FID better?
+
+**(c)** The Inception Score (IS) rewards two properties of the generated images. Name them, and explain which of the two would be low if the generator suffered from mode collapse.
+
+**(e)** Both metrics are imperfect proxies. Give one example of a flaw in the generated images that a good FID score would not necessarily rule out, and name the evaluation that the lecture still considers the gold standard.
+
+---
+
 ## References
 
 - Russakovsky, O. et al. (2015). ImageNet Large Scale Visual Recognition Challenge. *IJCV*. arxiv.org/abs/1409.0575
