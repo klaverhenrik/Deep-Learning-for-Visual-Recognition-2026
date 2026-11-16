@@ -497,98 +497,6 @@ Swin also addresses the single-scale limitation by merging patches at each stage
 
 This produces a pyramid of feature maps at 4 different scales, directly compatible with detection and segmentation frameworks like FPN and Mask R-CNN — the same frameworks used with CNN backbones. This is why Swin became the dominant vision backbone for dense prediction tasks.
 
-```python
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import math
-
-# ── Window attention: the core computational unit of Swin ────────────
-def window_partition(x, window_size):
-    """
-    Partition a feature map into non-overlapping windows.
-    Args:
-        x: (B, H, W, C)  — spatial feature map
-        window_size: M   — window size (M×M patches per window)
-    Returns:
-        windows: (num_windows*B, M, M, C)
-    """
-    B, H, W, C = x.shape
-    # Reshape into (B, H/M, M, W/M, M, C)
-    x = x.view(B, H // window_size, window_size, W // window_size, window_size, C)
-    # Permute to (B, H/M, W/M, M, M, C) then merge batch and window dims
-    windows = x.permute(0, 1, 3, 2, 4, 5).contiguous()
-    windows = windows.view(-1, window_size, window_size, C)
-    return windows   # (num_windows*B, M, M, C)
-
-def window_reverse(windows, window_size, H, W):
-    """Reverse of window_partition."""
-    B_ = windows.shape[0]
-    B  = int(B_ / (H * W / window_size / window_size))
-    x  = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1)
-    x  = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
-    return x
-
-class WindowAttention(nn.Module):
-    """Self-attention within non-overlapping windows of M×M patches."""
-    def __init__(self, d_model, window_size, n_heads):
-        super().__init__()
-        self.window_size = window_size
-        self.n_heads     = n_heads
-        self.d_k         = d_model // n_heads
-        self.scale       = self.d_k ** -0.5
-
-        self.qkv  = nn.Linear(d_model, d_model * 3, bias=False)
-        self.proj = nn.Linear(d_model, d_model)
-
-        # Relative position bias (Swin uses relative rather than absolute positions)
-        self.rel_bias_table = nn.Parameter(
-            torch.zeros((2*window_size-1)**2, n_heads))
-        nn.init.trunc_normal_(self.rel_bias_table, std=0.02)
-
-    def forward(self, x):
-        """
-        x: (num_windows*B, M*M, d_model)
-        Returns: same shape
-        """
-        BW, N, C = x.shape   # BW = num_windows × batch, N = M² tokens
-
-        # Compute Q, K, V for all heads at once
-        qkv = self.qkv(x).chunk(3, dim=-1)   # 3 × (BW, N, C)
-        Q, K, V = [t.view(BW, N, self.n_heads, self.d_k).permute(0,2,1,3)
-                   for t in qkv]              # each: (BW, h, N, d_k)
-
-        # Scaled dot-product attention
-        attn = (Q @ K.transpose(-2,-1)) * self.scale   # (BW, h, N, N)
-        attn = attn.softmax(dim=-1)
-
-        out = (attn @ V).transpose(1,2).reshape(BW, N, C)
-        return self.proj(out)
-
-# ── Demonstration: window partitioning reduces attention cost ─────────
-H, W, C, M = 56, 56, 96, 7   # 56×56 feature map, 7×7 windows
-B = 2
-x = torch.randn(B, H, W, C)
-
-# Partition into windows
-windows = window_partition(x, M)            # (B×(H/M)×(W/M), M, M, C)
-print(f'Feature map: {x.shape}')            # (2, 56, 56, 96)
-print(f'After partition: {windows.shape}')  # (2*8*8=128, 7, 7, 96)
-
-# Attention cost comparison:
-n_full    = H * W              # 3136 tokens for global attention
-n_window  = M * M              # 49   tokens per window
-n_windows = (H//M) * (W//M)    # 64   windows
-
-global_cost = n_full ** 2
-window_cost = n_windows * (n_window ** 2)
-print(f'Global attention cost: {global_cost:,}')    # 9,834,496
-print(f'Window attention cost: {window_cost:,}')    # 200,704  (~50x less!)
-print(f'Speedup: {global_cost / window_cost:.1f}×')
-```
-
-*Code 6 – Window attention for Swin Transformer. The `window_partition` function reshapes the feature map into non-overlapping $M \times M$ windows. The cost comparison at the bottom shows the key benefit: window attention (200,704) is $\sim 50\times$ cheaper than global attention (9,834,496) for a $56 \times 56$ feature map.*
-
 ---
 
 ## 8  Self-Attention in CNNs
@@ -668,7 +576,7 @@ print(f'Output: {out.shape}')     # (4, 128, 32, 32) — same shape
 print(f'gamma at init: {attn.gamma.item():.1f}')   # 0.0 — starts as identity
 ```
 
-*Code 7 – Spatial self-attention for CNNs. The `gamma=0` initialisation is critical: it means the module starts as an identity transform (no attention effect) and the attention contribution is gradually increased by gradient descent. This prevents the fresh attention module from disrupting a partially-trained CNN's features.*
+*Code 6 – Spatial self-attention for CNNs. The `gamma=0` initialisation is critical: it means the module starts as an identity transform (no attention effect) and the attention contribution is gradually increased by gradient descent. This prevents the fresh attention module from disrupting a partially-trained CNN's features.*
 
 ---
 
@@ -712,10 +620,6 @@ The exercises are representative of the types of questions you might encounter a
 
 **(c)** Give one example of a task or situation where the locality bias of a CNN is a limitation rather than a help.
 
-**(d)** The lecture compares a CNN to a physics student who already knows Newton's laws and a Transformer to a scientist who knows nothing. Explain the analogy: what does each of them need, and what is the price for the Transformer?
-
-**(e)** A Transformer has "no translation equivariance". How does it then know that one image patch is at the top left and another at the bottom right?
-
 ---
 
 ### Exercise 2 — Reading Scaled Dot-Product Attention
@@ -741,28 +645,7 @@ output  = torch.bmm(weights, V)
 
 ---
 
-### Exercise 3 — Multi-Head Attention
-
-```python
-mha = MultiHeadAttention(d_model=256, n_heads=8)
-x   = torch.randn(4, 16, 256)
-out = mha(x, x, x)
-# out.shape == (4, 16, 256)
-```
-
-**(a)** What is the dimension $d_k$ of each head in this model? Why is it chosen as $d_\text{model}/h$, and what does this mean for the total computational cost compared with a single head of dimension $d_\text{model}$?
-
-**(b)** Explain the intuition behind using several heads instead of one. What can the different heads do that a single head cannot?
-
-**(c)** What is the role of the output matrix $\mathbf{W}_O$? Why is it needed after the heads have been concatenated?
-
-**(d)** The output has the same shape as the input. Why is this a useful property when many such layers are stacked?
-
-**(e)** If the number of heads is changed from 8 to 16 (with $d_\text{model}$ fixed), does the number of parameters in the four projection matrices change? Explain.
-
----
-
-### Exercise 4 — The Transformer Encoder Block
+### Exercise 3 — The Transformer Encoder Block
 
 ```python
 def forward(self, x):
@@ -776,21 +659,16 @@ def forward(self, x):
 
 **(a)** Point to the two residual connections in the code. What is the purpose of a residual connection here, and which architecture from Lecture 7 uses the same idea?
 
-**(b)** Explain the difference between batch normalisation and layer normalisation: over which axis are the mean and variance computed in each? Give two reasons why layer normalisation is preferred in Transformers.
+**(b)** After the self-attention, each token is passed through a feed-forward network (FFN) independently. Explain why the FFN is necessary. (Hint: what kind of operation is self-attention with respect to the token values, and what can the FFN add?)
 
-**(c)** After the self-attention, each token is passed through a feed-forward network (FFN) independently. Explain why the FFN is necessary. (Hint: what kind of operation is self-attention with respect to the token values, and what can the FFN add?)
+**(c)** The same FFN is applied to every token, with the same weights. In what sense is this similar to the convolution's parameter sharing, and in what sense does it differ?
 
-**(d)** The same FFN is applied to every token, with the same weights. In what sense is this similar to the convolution's parameter sharing, and in what sense does it differ?
-
-**(e)** The code applies the layer normalisation *before* each sub-layer ("pre-norm"). Does this change which operations the block contains? What is the effect on the input/output shape of the block?
-
-**(f)** An encoder consists of a stack of identical blocks. State what the encoder takes as input and what it produces as output, and what each token's output representation contains compared with its input.
+**(d)** An encoder consists of a stack of identical blocks. State what the encoder takes as input and what it produces as output, and what each token's output representation contains compared with its input.
 
 ---
 
-### Exercise 5 — Positional Embeddings
+### Exercise 4 — Positional Embeddings
 
-*Figure: a line plot of the cosine similarity between the sinusoidal position embedding of position 0 and the position embeddings of positions 0, 1, 2, …, 15 (embedding dimension 32). The curve starts at 1.0 for position 0, falls quickly over the first few positions to about 0.7, and then fluctuates between roughly 0.5 and 0.75 for the remaining positions.*
 
 $$\text{PE}(k,\, 2i) = \sin\!\left(\frac{k}{n^{2i/d}}\right) \qquad \text{PE}(k,\, 2i+1) = \cos\!\left(\frac{k}{n^{2i/d}}\right)$$
 
@@ -800,15 +678,9 @@ $$\text{PE}(k,\, 2i) = \sin\!\left(\frac{k}{n^{2i/d}}\right) \qquad \text{PE}(k,
 
 **(c)** Different pairs of dimensions rotate at different speeds. Which dimensions (small $i$ or large $i$) rotate fast and which slowly? Explain why using many different speeds makes it possible to tell positions apart, using the analogy of a binary counter.
 
-**(d)** Using the figure, what does the similarity of position 0 with positions 1, 2 and 3 tell you about the embeddings of neighbouring positions? Is the similarity for distant positions close to zero?
-
-**(e)** Sinusoidal embeddings are fixed, while ViT uses learned positional embeddings. State one advantage of each approach.
-
-**(f)** What goes wrong if a ViT with learned positional embeddings for 197 positions is given an image with more patches at inference time?
-
 ---
 
-### Exercise 6 — Reading the Vision Transformer
+### Exercise 5 — Reading the Vision Transformer
 
 ```python
 self.patch_embed = nn.Conv2d(in_channels, d_model,
@@ -834,13 +706,11 @@ def forward(self, x):
 
 **(d)** The CLS token output is used for classification. Why can it contain information about the whole image, even though it was not computed from any image pixels?
 
-**(e)** Draw (or describe) the sequence of steps from an input image to the class scores: image → ? → ? → ? → class scores.
-
-**(f)** Which of the layers in this model is the first one that mixes information between different image patches?
+**(e)** Which of the layers in this model is the first one that mixes information between different image patches?
 
 ---
 
-### Exercise 7 — Why Patches? The Cost of Pixel-Level Transformers
+### Exercise 6 — Why Patches? The Cost of Pixel-Level Transformers
 
 **(a)** What is the task that imageGPT is trained on, and what is a "token" in imageGPT?
 
@@ -848,13 +718,9 @@ def forward(self, x):
 
 **(c)** ViT cuts the image into patches instead. If $8 \times 8$ patches are used instead of single pixels, by what factor does the number of tokens decrease, and by what factor does the attention matrix shrink?
 
-**(d)** Name one thing that is lost when patches are used instead of pixels, and one thing that makes patches a reasonable choice for images.
-
-**(e)** Even with patches, the attention cost still grows quadratically with the number of tokens. Which architecture from the lecture was designed to fix this, and for which kind of task is the problem most serious?
-
 ---
 
-### Exercise 8 — ViT versus CNN: Data, Receptive Field and Hardware
+### Exercise 7 — ViT versus CNN: Data, Receptive Field and Hardware
 
 **(a)** The lecture reports that a ViT trained from scratch on ImageNet alone performs worse than a ResNet of comparable size. Explain why, using the concept of inductive bias.
 
@@ -872,23 +738,7 @@ def forward(self, x):
 
 ---
 
-### Exercise 9 — Swin Transformer: Windows and Hierarchy
-
-**(a)** Standard ViT has two limitations for dense prediction tasks such as detection and segmentation. Name them.
-
-**(b)** Explain how window attention works and why its cost grows linearly, and not quadratically, with the number of image patches (for a fixed window size $M$).
-
-**(c)** If the image side is doubled (with the patch size and window size fixed), by what factor does the attention cost grow for global attention and for window attention?
-
-**(d)** Window attention alone prevents patches in different windows from interacting. Explain how *shifted windows* solve this problem. How are the windows arranged in two consecutive blocks?
-
-**(e)** How does Swin produce feature maps at multiple scales, and why is this useful for object detection frameworks such as Mask R-CNN? Which CNN concept does this resemble?
-
-**(f)** After four stages the feature map has $1/32$ of the input resolution. What is the spatial size of the final feature map for a $224 \times 224$ input image?
-
----
-
-### Exercise 10 — Self-Attention in CNNs
+### Exercise 8 — Self-Attention in CNNs
 
 ```python
 self.gamma = nn.Parameter(torch.zeros(1))
@@ -907,24 +757,6 @@ def forward(self, x):                          # x: (B, C, H, W)
 **(b)** Which dimensions of the feature map become the "tokens" of the sequence, and what is the embedding dimension of each token? What is the shape of the attention matrix?
 
 **(c)** How are $Q$, $K$ and $V$ computed here, and why is a $1 \times 1$ convolution a suitable replacement for the linear projections used in the Transformer?
-
-**(d)** The residual weight `gamma` is initialised to zero. What does the module compute at the start of training, and why is this a good idea when the module is added to a partially trained network?
-
-**(e)** The attention matrix has $(H \cdot W)^2$ entries. At which stage of a CNN (early or late) would you add this module, and why?
-
----
-
-### Exercise 11 — DETR: Detection with Transformers
-
-**(a)** Which two hand-designed components of earlier detectors does DETR eliminate?
-
-**(b)** Describe the architecture of DETR: what does the CNN backbone do, what does the Transformer encoder do, and what is the input of the Transformer decoder?
-
-**(c)** What are the *object queries*? How many are there, and what does each decoder output embedding predict? What does the model predict for the queries that do not correspond to any object?
-
-**(d)** DETR uses both self-attention and cross-attention. Point out where each of them is used, and state in each case where the queries and where the keys and values come from.
-
-**(e)** Give one advantage and one disadvantage of DETR compared with Faster R-CNN, as stated in the lecture.
 
 ---
 
